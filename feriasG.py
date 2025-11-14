@@ -13,6 +13,24 @@ st.title("🏖️ Sistema de Solicitação de Férias")
 # Nome do arquivo CSV
 ARQUIVO_CSV = "ferias.csv"
 
+
+import holidays
+from datetime import date, timedelta
+
+# Feriados nacionais de Portugal
+feriados_pt = holidays.Portugal()
+
+# --- FERIADOS MUNICIPAIS DA MEALHADA ---
+# 2026
+feriados_pt.append({
+    date(2026, 5, 14): "Feriado Municipal da Mealhada"
+})
+
+# 2027
+feriados_pt.append({
+    date(2027, 5, 6): "Feriado Municipal da Mealhada"
+})
+
 # =========================
 # CONFIGURAÇÃO DE SENHAS
 # =========================
