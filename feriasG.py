@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import date, timedelta
 import os
 import plotly.express as px  # para o gráfico de Gantt
+import holidays
 
 # =========================
 # CONFIGURAÇÃO INICIAL
@@ -12,10 +13,6 @@ st.title("🏖️ Sistema de Solicitação de Férias")
 
 # Nome do arquivo CSV
 ARQUIVO_CSV = "ferias.csv"
-
-
-import holidays
-from datetime import date, timedelta
 
 # Feriados nacionais de Portugal
 feriados_pt = holidays.Portugal()
