@@ -3,3 +3,4 @@ pandas
 plotly
 streamlit-calendar
 python-dateutil
+holidays
