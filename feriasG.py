@@ -163,3 +163,45 @@ elif aba == "📊 Visualizar Solicitações":
             else:
                 st.error("Senha incorreta.")
         st.stop()
+
+    st.header("📊 Solicitações Registradas")
+
+    if not os.path.exists(ARQUIVO_CSV):
+        st.info("Nenhuma solicitação encontrada.")
+        st.stop()
+
+    df = pd.read_csv(ARQUIVO_CSV)
+    df["Data de Início"] = pd.to_datetime(df["Data de Início"])
+    df["Data de Término"] = pd.to_datetime(df["Data de Término"])
+
+    nomes = ["(Todos)"] + sorted(df["Nome"].unique())
+    filtro = st.selectbox("Filtrar funcionário:", nomes)
+
+    if filtro != "(Todos)":
+        df = df[df["Nome"] == filtro]
+
+    st.dataframe(df, use_container_width=True)
+
+    # ----------------------
+    # GRÁFICO DE GANTT
+    # ----------------------
+    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
+    fig = px.timeline(
+        df,
+        x_start="Data de Início",
+        x_end="Data de Término",
+        y="Nome",
+        color="Período",
+        hover_data=["Dias Úteis", "Observações"]
+    )
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # download geral
+    csv_full = df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "📥 Baixar CSV Completo",
+        data=csv_full,
+        file_name="solicitacoes_ferias.csv",
+        mime="text/csv"
+    )
