@@ -18,15 +18,8 @@ ARQUIVO_CSV = "ferias.csv"
 feriados_pt = holidays.Portugal()
 
 # --- FERIADOS MUNICIPAIS DA MEALHADA ---
-# 2026
-feriados_pt.append({
-    date(2026, 5, 14): "Feriado Municipal da Mealhada"
-})
-
-# 2027
-feriados_pt.append({
-    date(2027, 5, 6): "Feriado Municipal da Mealhada"
-})
+feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
+feriados_pt[date(2027, 5, 6)] = "Feriado Municipal da Mealhada"
 
 # =========================
 # CONFIGURAÇÃO DE SENHAS
