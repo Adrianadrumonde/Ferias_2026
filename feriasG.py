@@ -72,16 +72,16 @@ def salvar_solicitacao(nome, periodos):
 # =========================
 # FUNÇÃO PARA CALCULAR DIAS ÚTEIS
 # =========================
+    """Calcula número de dias úteis (segunda a sexta) entre duas datas. Ignora os feriados"""
 def dias_uteis(inicio, fim):
-    """Calcula número de dias úteis (segunda a sexta) entre duas datas."""
     dias = 0
     atual = inicio
     while atual <= fim:
-        if atual.weekday() < 5:  # 0=segunda, 6=domingo
+        # weekday() => 0=2ª feira ... 4=6ª feira
+        if atual.weekday() < 5 and atual not in feriados_pt:
             dias += 1
         atual += timedelta(days=1)
     return dias
-
 # =========================
 # INTERFACE DE NAVEGAÇÃO
 # =========================
