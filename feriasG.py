@@ -62,8 +62,8 @@ def salvar_solicitacao(nome, periodos):
 # =========================
 # FUNÇÃO PARA CALCULAR DIAS ÚTEIS
 # =========================
-    """Calcula número de dias úteis (segunda a sexta) entre duas datas. Ignora os feriados"""
 def dias_uteis(inicio, fim):
+     """Calcula número de dias úteis (segunda a sexta-feira), excluindo feriados."""
     dias = 0
     atual = inicio
     while atual <= fim:
@@ -108,17 +108,17 @@ if aba == "📅 Solicitar Férias":
 
                 # Calcula dias úteis
                 if data_fim >= data_inicio:
-                    n_dias = dias_uteis(data_inicio, data_fim)
-                    st.info(f"🧮 **{n_dias} dias úteis** de férias neste período.")
+                    dias = dias_uteis(data_inicio, data_fim)
+                    st.write(f"📅 Dias úteis solicitados: **{dias}**")
                 else:
                     st.warning("⚠️ A data de término deve ser posterior à data de início.")
-                    n_dias = 0
+                    dias = 0
 
                 periodos.append({
                     "Período": i,
                     "Data de Início": data_inicio,
                     "Data de Término": data_fim,
-                    "Dias Úteis": n_dias,
+                    "Dias Úteis": dias,
                     "Observações": observacoes
                 })
 
