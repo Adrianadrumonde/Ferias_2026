@@ -174,11 +174,20 @@ elif aba == "📊 Visualizar Solicitações":
     df["Data de Início"] = pd.to_datetime(df["Data de Início"])
     df["Data de Término"] = pd.to_datetime(df["Data de Término"])
 
-    nomes = ["(Todos)"] + sorted(df["Nome"].unique())
-    filtro = st.selectbox("Filtrar funcionário:", nomes)
+    #nomes = ["(Todos)"] + sorted(df["Nome"].unique())
+    #filtro = st.selectbox("Filtrar funcionário:", nomes)
 
-    if filtro != "(Todos)":
-        df = df[df["Nome"] == filtro]
+    #if filtro != "(Todos)":
+        #df = df[df["Nome"] == filtro]
+    
+    nomes = sorted(df["Nome"].unique())
+    filtros = st.multiselect(
+       "Filtrar funcionário(s):",
+     nomes
+    )
+
+    if filtros:
+     df = df[df["Nome"].isin(filtros)]
 
     st.dataframe(df, use_container_width=True)
 
