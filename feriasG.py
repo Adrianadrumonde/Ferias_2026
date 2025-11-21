@@ -126,6 +126,11 @@ if aba == "📅 Solicitar Férias":
                     "Dias Úteis": n_dias,
                     "Observações": obs
                 })
+    # =========================
+    # CONTADOR TOTAL ABA 1
+    # =========================
+    total_dias = sum(p["Dias Úteis"] for p in periodos if p["Dias Úteis"] > 0)
+    st.subheader(f"📘 Total de dias úteis solicitados: **{total_dias}**")
 
     if st.button("📤 Enviar Solicitação"):
         if not nome:
@@ -171,15 +176,23 @@ elif aba == "📊 Visualizar Solicitações":
         st.stop()
 
     df = pd.read_csv(ARQUIVO_CSV)
+    #df["Data de Início"] = pd.to_datetime(df["Data de Início"])
+    #df["Data de Término"] = pd.to_datetime(df["Data de Término"])
+    
     df["Data de Início"] = pd.to_datetime(df["Data de Início"])
     df["Data de Término"] = pd.to_datetime(df["Data de Término"])
 
-    #nomes = ["(Todos)"] + sorted(df["Nome"].unique())
-    #filtro = st.selectbox("Filtrar funcionário:", nomes)
+    # Criar coluna Ano com base na data de início
+    df["Ano"] = df["Data de Início"].dt.year
 
-    #if filtro != "(Todos)":
-        #df = df[df["Nome"] == filtro]
+    # Calcular total de dias por pessoa/ano
+    totais = df.groupby(["Nome", "Ano"])["Dias Úteis"].sum().reset_index()
+    totais.rename(columns={"Dias Úteis": "Total dias/Ano"}, inplace=True)
+
+    # Inserir no dataframe principal
+    df = df.merge(totais, on=["Nome", "Ano"], how="left")
     
+    #####
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
@@ -190,6 +203,14 @@ elif aba == "📊 Visualizar Solicitações":
      df = df[df["Nome"].isin(filtros)]
 
     st.dataframe(df, use_container_width=True)
+
+
+    # =========================
+    # CONTADOR TOTAL ABA 2
+    # =========================
+    #total_dias_filtrado = df["Dias Úteis"].sum()
+    #st.subheader(f"📘 Total de dias úteis (filtrados): **{total_dias_filtrado}**")
+
 
     # ----------------------
     # GRÁFICO DE GANTT
@@ -214,3 +235,4 @@ elif aba == "📊 Visualizar Solicitações":
         file_name="solicitacoes_ferias.csv",
         mime="text/csv"
     )
+
