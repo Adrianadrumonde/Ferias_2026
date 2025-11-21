@@ -4,4 +4,3 @@ plotly
 streamlit-calendar
 python-dateutil
 holidays
-streamlit google-api-python-client google-auth-httplib2 google-auth-oauthlib
