@@ -4,3 +4,4 @@ plotly
 streamlit-calendar
 python-dateutil
 holidays
+python-dotenv
