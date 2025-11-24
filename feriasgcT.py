@@ -4,6 +4,23 @@ from datetime import date, timedelta
 import os
 import plotly.express as px
 import holidays
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+from dotenv import load_dotenv
+
+
+# Carrega variáveis do .env
+load_dotenv()
+
+SMTP_SERVER = "mail.cesab.pt"
+SMTP_PORT = 465  # SSL
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
+DESTINO_EMAIL = "a.drumonde@cesab.pt"
+
 
 # =========================
 # CONFIGURAÇÃO INICIAL
@@ -77,6 +94,41 @@ def salvar_solicitacao(nome, periodos):
 
 
 # =========================
+# FUNÇÃO PARA ENVIAR EMAIL COM ANEXO
+# =========================
+def enviar_email_com_anexo(nome, df_periodos):
+    try:
+        # Preparar email
+        subject = f"Solicitação de Férias - {nome}"
+        body = "Segue em anexo a solicitação de férias."
+
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_USER
+        msg['To'] = DESTINO_EMAIL
+        msg['Subject'] = subject
+
+        msg.attach(MIMEText(body, "plain"))
+
+        # Converte DataFrame para CSV em bytes
+        csv_bytes = df_periodos.to_csv(index=False).encode("utf-8")
+        part = MIMEApplication(csv_bytes, Name=f"solicitacao_{nome.replace(' ', '_')}.csv")
+        part['Content-Disposition'] = f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.csv"'
+        msg.attach(part)
+
+        # Envia e-mail
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_USER, DESTINO_EMAIL, msg.as_string())
+
+        return True
+    except Exception as e:
+        # Para debug, mostre erro no Streamlit
+        st.error(f"Erro ao enviar email: {e}")
+        return False
+
+
+# =========================
 # MENU LATERAL
 # =========================
 aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações"])
@@ -126,11 +178,6 @@ if aba == "📅 Solicitar Férias":
                     "Dias Úteis": n_dias,
                     "Observações": obs
                 })
-    # =========================
-    # CONTADOR TOTAL ABA 1
-    # =========================
-    total_dias = sum(p["Dias Úteis"] for p in periodos if p["Dias Úteis"] > 0)
-    st.subheader(f"📘 Total de dias úteis solicitados: **{total_dias}**")
 
     if st.button("📤 Enviar Solicitação"):
         if not nome:
@@ -151,7 +198,10 @@ if aba == "📅 Solicitar Férias":
                 file_name=f"solicitacao_{nome.replace(' ', '_')}.csv",
                 mime="text/csv"
             )
-
+            # Envia email automático
+            df_periodos = pd.DataFrame(periodos)
+            if enviar_email_com_anexo(nome, df_periodos):
+                st.success("📧 Email enviado para o RH com sucesso!")
 
 # =========================
 # ABA 2 – RH
@@ -176,23 +226,15 @@ elif aba == "📊 Visualizar Solicitações":
         st.stop()
 
     df = pd.read_csv(ARQUIVO_CSV)
-    #df["Data de Início"] = pd.to_datetime(df["Data de Início"])
-    #df["Data de Término"] = pd.to_datetime(df["Data de Término"])
-    
     df["Data de Início"] = pd.to_datetime(df["Data de Início"])
     df["Data de Término"] = pd.to_datetime(df["Data de Término"])
 
-    # Criar coluna Ano com base na data de início
-    df["Ano"] = df["Data de Início"].dt.year
+    #nomes = ["(Todos)"] + sorted(df["Nome"].unique())
+    #filtro = st.selectbox("Filtrar funcionário:", nomes)
 
-    # Calcular total de dias por pessoa/ano
-    totais = df.groupby(["Nome", "Ano"])["Dias Úteis"].sum().reset_index()
-    totais.rename(columns={"Dias Úteis": "Total dias/Ano"}, inplace=True)
-
-    # Inserir no dataframe principal
-    df = df.merge(totais, on=["Nome", "Ano"], how="left")
+    #if filtro != "(Todos)":
+        #df = df[df["Nome"] == filtro]
     
-    #####
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
@@ -203,14 +245,6 @@ elif aba == "📊 Visualizar Solicitações":
      df = df[df["Nome"].isin(filtros)]
 
     st.dataframe(df, use_container_width=True)
-
-
-    # =========================
-    # CONTADOR TOTAL ABA 2
-    # =========================
-    #total_dias_filtrado = df["Dias Úteis"].sum()
-    #st.subheader(f"📘 Total de dias úteis (filtrados): **{total_dias_filtrado}**")
-
 
     # ----------------------
     # GRÁFICO DE GANTT
@@ -235,4 +269,3 @@ elif aba == "📊 Visualizar Solicitações":
         file_name="solicitacoes_ferias.csv",
         mime="text/csv"
     )
-
