@@ -22,7 +22,7 @@ feriados_pt = holidays.Portugal()
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2027, 5, 6)] = "Feriado Municipal da Mealhada"
 
-
+# =========================
 # =========================
 # FUNÇÃO DIAS ÚTEIS
 # =========================
