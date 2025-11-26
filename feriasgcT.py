@@ -9,16 +9,11 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from dotenv import load_dotenv
-
-
-# Carrega variáveis do .env
-load_dotenv()
 
 SMTP_SERVER = "mail.cesab.pt"
 SMTP_PORT = 465  # SSL
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
+SMTP_USER = st.secrets["user"]
+SMTP_PASS = st.secrets["pass"]
 DESTINO_EMAIL = "a.drumonde@cesab.pt"
 
 
@@ -33,7 +28,8 @@ ARQUIVO_CSV = "ferias.csv"
 # =========================
 # FERIADOS PORTUGAL + MEALHADA
 # =========================
-feriados_pt = holidays.Portugal()
+feriados_pt = holidays.country_holidays("PT")
+#feriados_pt = holidays.Portugal()
 
 # Mealhada 2026 e 2027
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
