@@ -2,3 +2,9 @@
 ./venv/
 .ignore
 ./streamlit
+
+# Exclusão de Ambientes Virtuais
+venv/
+
+# Exclusão de Configurações Sensíveis do Streamlit
+.streamlit/
