@@ -258,13 +258,16 @@ elif aba == "📊 Visualizar Solicitações":
     # GRÁFICO DE GANTT
     # ----------------------
     st.subheader("📅 Gráfico de Gantt – Períodos de Férias/BH")
+    st.write("Colunas do DF:", df.columns.tolist())
+    st.write(df.head())
+
     fig = px.timeline(
         df,
         x_start="Data de Início",
         x_end="Data de Término",
         y="Nome",
         color="Período",
-        hover_data=["Tipo", "Dias Úteis", "Observações"] # adiciona Tipo no hover
+        hover_data=hover_cols # adiciona Tipo no hover
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True)
