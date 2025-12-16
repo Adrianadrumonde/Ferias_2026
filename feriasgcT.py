@@ -176,6 +176,11 @@ if aba == "📅 Solicitar Férias":
                     "Dias Úteis": n_dias,
                     "Observações": obs
                 })
+    # =========================
+    # CONTADOR TOTAL ABA 1
+    # =========================
+    total_dias = sum(p["Dias Úteis"] for p in periodos if p["Dias Úteis"] > 0)
+    st.subheader(f"📘 Total de dias úteis solicitados: **{total_dias}**")
 
     if st.button("📤 Enviar Solicitação"):
         if not nome:
