@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 from datetime import date, timedelta
@@ -50,7 +51,6 @@ def dias_uteis(inicio, fim):
         atual += timedelta(days=1)
     return dias
 
-
 # =========================
 # SENHAS
 # =========================
@@ -62,7 +62,6 @@ if "autenticado_func" not in st.session_state:
 
 if "autenticado_rh" not in st.session_state:
     st.session_state.autenticado_rh = False
-
 
 # =========================
 # GUARDAR SOLICITAÇÕES
@@ -88,7 +87,6 @@ def salvar_solicitacao(nome, periodos):
         df_final = novo
 
     df_final.to_csv(ARQUIVO_CSV, index=False)
-
 
 # =========================
 # FUNÇÃO PARA ENVIAR EMAIL COM ANEXO
@@ -124,12 +122,10 @@ def enviar_email_com_anexo(nome, df_periodos):
         st.error(f"Erro ao enviar email: {e}")
         return False
 
-
 # =========================
 # MENU LATERAL
 # =========================
 aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações"])
-
 
 # =========================
 # ABA 1 – FORMULÁRIO
@@ -157,12 +153,6 @@ if aba == "📅 Solicitar Férias":
             incluir = st.checkbox(f"Incluir Período {i}", value=(i == 1))
 
             if incluir:
-                tipo = st.radio(
-                    f"Tipo do Período {i}",
-                    ["Férias", "BH"],
-                    horizontal=True,
-                    key=f"tipo_{i}"
-                )
                 inicio = st.date_input(f"Data de início {i}", date.today(), key=f"inicio_{i}")
                 fim = st.date_input(f"Data de término {i}", date.today(), key=f"fim_{i}")
                 obs = st.text_area(f"Observações (opcional) {i}", key=f"obs_{i}")
@@ -257,17 +247,14 @@ elif aba == "📊 Visualizar Solicitações":
     # ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
-    st.subheader("📅 Gráfico de Gantt – Períodos de Férias/BH")
-    st.write("Colunas do DF:", df.columns.tolist())
-    st.write(df.head())
-
+    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
     fig = px.timeline(
         df,
         x_start="Data de Início",
         x_end="Data de Término",
         y="Nome",
         color="Período",
-        hover_data=hover_cols # adiciona Tipo no hover
+        hover_data=["Dias Úteis", "Observações"]
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True)
@@ -280,3 +267,4 @@ elif aba == "📊 Visualizar Solicitações":
         file_name="solicitacoes_ferias.csv",
         mime="text/csv"
     )
+
