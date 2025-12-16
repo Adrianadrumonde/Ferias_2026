@@ -33,7 +33,9 @@ feriados_pt = holidays.country_holidays("PT")
 
 # Mealhada 2026 e 2027
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
-feriados_pt[date(2027, 5, 6)] = "Feriado Municipal da Mealhada"
+feriados_pt[date(2027, 5, 20)] = "Feriado Municipal da Mealhada"
+feriados_pt[date(2028, 5, 28)] = "Feriado Municipal da Mealhada"
+feriados_pt[date(2029, 5, 30)] = "Feriado Municipal da Mealhada"
 
 # =========================
 # =========================
