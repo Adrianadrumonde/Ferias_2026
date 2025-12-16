@@ -16,7 +16,6 @@ SMTP_USER = st.secrets["user"]
 SMTP_PASS = st.secrets["pass"]
 DESTINO_EMAIL = "a.drumonde@cesab.pt"
 
-
 # =========================
 # CONFIGURAÇÃO INICIAL
 # =========================
@@ -158,6 +157,12 @@ if aba == "📅 Solicitar Férias":
             incluir = st.checkbox(f"Incluir Período {i}", value=(i == 1))
 
             if incluir:
+                tipo = st.radio(
+                    f"Tipo do Período {i}",
+                    ["Férias", "BH"],
+                    horizontal=True,
+                    key=f"tipo_{i}"
+                )
                 inicio = st.date_input(f"Data de início {i}", date.today(), key=f"inicio_{i}")
                 fim = st.date_input(f"Data de término {i}", date.today(), key=f"fim_{i}")
                 obs = st.text_area(f"Observações (opcional) {i}", key=f"obs_{i}")
@@ -252,14 +257,14 @@ elif aba == "📊 Visualizar Solicitações":
     # ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
-    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
+    st.subheader("📅 Gráfico de Gantt – Períodos de Férias/BH")
     fig = px.timeline(
         df,
         x_start="Data de Início",
         x_end="Data de Término",
         y="Nome",
         color="Período",
-        hover_data=["Dias Úteis", "Observações"]
+        hover_data=["Tipo", "Dias Úteis", "Observações"] # adiciona Tipo no hover
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True)
