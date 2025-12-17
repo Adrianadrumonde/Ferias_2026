@@ -198,6 +198,8 @@ if aba == "📅 Solicitar Férias":
             )
             # Envia email automático
             df_periodos = pd.DataFrame(periodos)
+            # Adicionar nome do funcionário ao CSV do email
+            df_periodos.insert(0, "Nome do funcionário", nome)
             if enviar_email_com_anexo(nome, df_periodos):
                 st.success("📧 Email enviado para o RH com sucesso!")
 
