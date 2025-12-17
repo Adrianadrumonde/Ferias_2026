@@ -20,14 +20,14 @@ DESTINO_EMAIL = "a.drumonde@cesab.pt"
 # =========================
 # LISTA DE FUNCIONÁRIOS
 # =========================
-FUNCIONARIOS = [Carla Sério,Adriana Drumonde,Maria Paulino,Elsa Barracho,Sandra Paulo,João Pereira,
-                Armanda Fernandes,Andreia Mendes,Sarah Silva,Sónia Ferreira,Brenda Santos,M.ª do Céu Martins,
-                Ana Joaquina,André Barandas,Maksym Martens ,Jaqueline Reis,Alexandra Rajado,Diogo Reis,Liliana Nisa,
-                Sandra Pinheiro,Mónica Cerveira,Ana Antunes,Cláudia Bernardes,Beatriz Martinho,Eliari Silva,
-                Marta Pedroso,Bruno Albuquerque,Tiago Daniel,Vítor Antunes,Óscar Soares,Rúben Rosa,Catarina Torres,
-                André Martins,Rafael Vivas,Telmo Menoita,Edgar Martins,João Mendes,João Ferreira,Bruno Santos,
-                Renato Alves,João Peixinho,Fábio Pego,Pedro Robalo (CESAB),Tomas Fernandes,Tiago Costa,Gabriel Pinto
-]
+FUNCIONARIOS = ["Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
+                "Armanda Fernandes","Andreia Mendes","Sarah Silva","Sónia Ferreira","Brenda Santos","M.ª do Céu Martins",
+                "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Sandra Pinheiro","Mónica Cerveira","Ana Antunes","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
+                "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
+                "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "João Mendes", "João Ferreira", "Bruno Santos",
+                "Renato Alves", "João Peixinho", "Fábio Pego", "Pedro Robalo (CESAB)", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto",
+                ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
 # =========================
