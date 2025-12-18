@@ -18,6 +18,19 @@ SMTP_PASS = st.secrets["pass"]
 DESTINO_EMAIL = "a.drumonde@cesab.pt"
 
 # =========================
+# LISTA DE FUNCIONÁRIOS
+# =========================
+FUNCIONARIOS = ["Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
+                "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
+                "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
+                "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
+                "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
+                "Renato Alves",  "Fábio Pego", "Pedro Robalo ", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto",
+                ]
+FUNCIONARIOS = sorted(FUNCIONARIOS)
+
+# =========================
 # CONFIGURAÇÃO INICIAL
 # =========================
 st.set_page_config(page_title="Gestão de Férias", page_icon="🏖️", layout="centered")
@@ -30,6 +43,8 @@ ARQUIVO_CSV = "ferias.csv"
 # =========================
 feriados_pt = holidays.country_holidays("PT")
 #feriados_pt = holidays.Portugal()
+
+
 
 # Mealhada 2026 e 2027
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
@@ -144,7 +159,7 @@ if aba == "📅 Solicitar Férias":
         st.stop()
 
     st.header("📅 Solicitação de Férias")
-    nome = st.text_input("Nome do funcionário")
+    nome = st.selectbox("Nome do funcionário", FUNCIONARIOS)
 
     periodos = []
 
