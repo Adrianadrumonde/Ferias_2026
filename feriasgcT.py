@@ -261,17 +261,30 @@ elif aba == "📊 Visualizar Solicitações":
 
     st.dataframe(df, use_container_width=True)
 
-    # ----------------------
+# ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
     st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
+
+    # Preparar um DataFrame de plotagem: se período tem apenas um dia (ou fim <= inicio),
+    # garantimos que Data de Término_plot > Data de Início para que a barra seja visível.
+    df_plot = df.copy()
+    # já convertido acima, mas garantimos novamente caso
+    df_plot["Data de Início"] = pd.to_datetime(df_plot["Data de Início"])
+    df_plot["Data de Término"] = pd.to_datetime(df_plot["Data de Término"])
+    df_plot["Data de Término_plot"] = df_plot["Data de Término"]
+    # Se a data de término for igual ou anterior à de início, ajusta para início + 1 dia (só para plot)
+    df_plot.loc[df_plot["Data de Término_plot"] <= df_plot["Data de Início"], "Data de Término_plot"] = df_plot["Data de Início"] + pd.Timedelta(days=1)
+    # Converter Período para string para cores discretas e legíveis
+    df_plot["Período"] = df_plot["Período"].astype(str)
+
     fig = px.timeline(
-        df,
+        df_plot,
         x_start="Data de Início",
-        x_end="Data de Término",
+        x_end="Data de Término_plot",
         y="Nome",
         color="Período",
-        hover_data=["Dias Úteis", "Observações"]
+        hover_data=["Dias Úteis", "Observações", "Data de Término"]
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig, use_container_width=True)
