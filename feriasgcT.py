@@ -96,12 +96,12 @@ def salvar_solicitacao(nome, periodos):
     novo = pd.DataFrame(registros)
 
     if os.path.exists(ARQUIVO_CSV):
-        antigo = pd.read_csv( ARQUIVO_CSV, sep=";", encoding="utf-8-sig" )
+        antigo = pd.read_csv(ARQUIVO_CSV)
         df_final = pd.concat([antigo, novo], ignore_index=True)
     else:
         df_final = novo
 
-    df_final.to_csv( ARQUIVO_CSV, index=False, sep=";", encoding="utf-8-sig" )
+    df_final.to_csv(ARQUIVO_CSV, index=False)
 
 # =========================
 # FUNÇÃO PARA ENVIAR EMAIL COM ANEXO
@@ -120,7 +120,7 @@ def enviar_email_com_anexo(nome, df_periodos):
         msg.attach(MIMEText(body, "plain"))
 
         # Converte DataFrame para CSV em bytes
-        csv_bytes = df_periodos.to_csv( index=False, sep=";", encoding="utf-8-sig" ).encode("utf-8-sig")
+        csv_bytes = df_periodos.to_csv(index=False).encode("utf-8")
         part = MIMEApplication(csv_bytes, Name=f"solicitacao_{nome.replace(' ', '_')}.csv")
         part['Content-Disposition'] = f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.csv"'
         msg.attach(part)
