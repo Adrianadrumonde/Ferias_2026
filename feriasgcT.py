@@ -163,7 +163,7 @@ if aba == "📅 Solicitar Férias":
 
     periodos = []
 
-    for i in range(1, 5):
+    for i in range(1, 6):
         with st.expander(f"Período {i}", expanded=(i == 1)):
             incluir = st.checkbox(f"Incluir Período {i}", value=(i == 1))
 
