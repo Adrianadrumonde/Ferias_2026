@@ -96,12 +96,12 @@ def salvar_solicitacao(nome, periodos):
     novo = pd.DataFrame(registros)
 
     if os.path.exists(ARQUIVO_CSV):
-        antigo = pd.read_csv(ARQUIVO_CSV)
+        antigo = pd.read_csv(ARQUIVO_CSV, encoding="utf-8")
         df_final = pd.concat([antigo, novo], ignore_index=True)
     else:
         df_final = novo
 
-    df_final.to_csv(ARQUIVO_CSV, index=False)
+    df_final.to_csv(ARQUIVO_CSV, index=False, encoding="utf-8")
 
 # =========================
 # FUNÇÃO PARA ENVIAR EMAIL COM ANEXO
