@@ -11,10 +11,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import streamlit as st
 
+
 import gspread
 from google.oauth2.service_account import Credentials
 
-st.title("Teste Google Sheets")
 
 scope = ["https://www.googleapis.com/auth/spreadsheets"]
 creds = Credentials.from_service_account_info(
@@ -25,11 +25,12 @@ client = gspread.authorize(creds)
 
 sheet = client.open_by_key(st.secrets["sheets"]["sheet_id"]).sheet1
 
-st.success("Ligação OK!")
+st.write("Ligação OK!")
 
-if st.button("Escrever linha de teste"):
-    sheet.append_row(["Teste", "Funciona!"])
-    st.success("Linha escrita com sucesso!")
+sheet.append_row(["Teste", "Funciona!"])
+
+
+
 
 
 SMTP_SERVER = "mail.cesab.pt"
