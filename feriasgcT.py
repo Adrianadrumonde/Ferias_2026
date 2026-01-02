@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import date, timedelta
@@ -34,7 +33,7 @@ FUNCIONARIOS = sorted(FUNCIONARIOS)
 # CONFIGURAÇÃO INICIAL
 # =========================
 st.set_page_config(page_title="Gestão de Férias", page_icon="🏖️", layout="centered")
-st.title("🏖️ Sistema de Solicitação de Férias")
+st.title("🏖️ Sistema de Solicitação de Férias e Banco de Horas")
 
 ARQUIVO_CSV = "ferias.csv"
 
@@ -44,15 +43,12 @@ ARQUIVO_CSV = "ferias.csv"
 feriados_pt = holidays.country_holidays("PT")
 #feriados_pt = holidays.Portugal()
 
-
-
 # Mealhada 2026 e 2027
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2027, 5, 20)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2028, 5, 28)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2029, 5, 30)] = "Feriado Municipal da Mealhada"
 
-# =========================
 # =========================
 # FUNÇÃO DIAS ÚTEIS
 # =========================
@@ -140,23 +136,25 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações"])
+aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "⏱️ Banco de Horas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
 # =========================
 if aba == "📅 Solicitar Férias":
 
-    if not st.session_state.autenticado_func:
+    if not st.session_state.get("autenticado_func", False):
         st.header("🔐 Acesso ao Formulário")
         senha = st.text_input("Código de acesso:", type="password")
         if st.button("Entrar"):
-            if senha == SENHA_FUNCIONARIO:
+            if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
                 st.session_state.autenticado_func = True
                 st.success("Acesso autorizado!")
             else:
                 st.error("Código incorreto.")
-        st.stop()
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_func", False):
+            st.stop()
 
     st.header("📅 Solicitação de Férias")
     nome = st.selectbox("Nome do funcionário", FUNCIONARIOS)
@@ -223,16 +221,18 @@ if aba == "📅 Solicitar Férias":
 # =========================
 elif aba == "📊 Visualizar Solicitações":
 
-    if not st.session_state.autenticado_rh:
+    if not st.session_state.get("autenticado_rh", False):
         st.header("🔐 Área do RH")
         senha = st.text_input("Senha RH:", type="password")
         if st.button("Entrar RH"):
-            if senha == SENHA_RH:
+            if senha.strip().lower() == SENHA_RH.lower():
                 st.session_state.autenticado_rh = True
                 st.success("Acesso autorizado!")
             else:
                 st.error("Senha incorreta.")
-        st.stop()
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_rh", False):
+            st.stop()
 
     st.header("📊 Solicitações Registradas")
 
@@ -244,12 +244,6 @@ elif aba == "📊 Visualizar Solicitações":
     df["Data de Início"] = pd.to_datetime(df["Data de Início"])
     df["Data de Término"] = pd.to_datetime(df["Data de Término"])
 
-    #nomes = ["(Todos)"] + sorted(df["Nome"].unique())
-    #filtro = st.selectbox("Filtrar funcionário:", nomes)
-
-    #if filtro != "(Todos)":
-        #df = df[df["Nome"] == filtro]
-    
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
@@ -298,3 +292,94 @@ elif aba == "📊 Visualizar Solicitações":
         mime="text/csv"
     )
 
+# =========================
+# ABA 3 – BH / BANCO DE HORAS
+# =========================
+elif aba == "⏱️ Banco de Horas":
+
+    if not st.session_state.get("autenticado_func", False):
+        st.header("🔐 Acesso ao Formulário BH")
+        senha = st.text_input("Código de acesso (BH):", type="password")
+        if st.button("Entrar BH"):
+            if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
+                st.session_state.autenticado_func = True
+                st.success("Acesso autorizado!")
+            else:
+                st.error("Código incorreto.")
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_func", False):
+            st.stop()
+
+    st.header("⏱️ Solicitação BH - Banco de Horas")
+    nome = st.selectbox("Nome do funcionário", FUNCIONARIOS)
+
+    st.markdown("Pode submeter até 3 solicitações de BH. Cada solicitação corresponde a um único dia e deve selecionar a parte do dia (manhã/tarde).")
+
+    registros_bh = []
+    # Permitimos até 3 solicitações
+    for i in range(1, 4):
+        with st.expander(f"Solicitação {i}", expanded=(i == 1)):
+            incluir = st.checkbox(f"Incluir Solicitação {i}", value=False, key=f"bh_incluir_{i}")
+            if incluir:
+                data_bh = st.date_input(f"Data (Solicitação {i})", date.today(), key=f"bh_data_{i}")
+                # Dois botões (checboxes) para manhã e tarde; pelo menos um deve ser selecionado
+                parte_manha = st.checkbox("Manhã", value=False, key=f"bh_manha_{i}")
+                parte_tarde = st.checkbox("Tarde", value=False, key=f"bh_tarde_{i}")
+                obs_bh = st.text_area(f"Observações (opcional) {i}", key=f"bh_obs_{i}")
+
+                registros_bh.append({
+                    "Período": i,
+                    "Data": data_bh,
+                    "Manhã": parte_manha,
+                    "Tarde": parte_tarde,
+                    "Observações": obs_bh
+                })
+
+    if st.button("📤 Enviar Solicitações BH"):
+        if not nome:
+            st.error("O nome é obrigatório.")
+        else:
+            # Validar pelo menos uma solicitação e validações internas
+            if not registros_bh:
+                st.error("Nenhuma solicitação selecionada. Marque pelo menos uma 'Incluir Solicitação'.")
+            else:
+                erros = []
+                registros_validos = []
+                for r in registros_bh:
+                    # Validação: pelo menos manhã ou tarde selecionada
+                    if not (r["Manhã"] or r["Tarde"]):
+                        erros.append(f"Na Solicitação {r['Período']} deve selecionar pelo menos 'Manhã' ou 'Tarde'.")
+                    else:
+                        # Construir campo 'Parte' com valores legíveis
+                        partes = []
+                        if r["Manhã"]:
+                            partes.append("Manhã")
+                        if r["Tarde"]:
+                            partes.append("Tarde")
+                        parte_str = ",".join(partes)
+                        registros_validos.append({
+                            "Período": r["Período"],
+                            "Data": r["Data"],
+                            "Parte": parte_str,
+                            "Observações": r["Observações"]
+                        })
+                if erros:
+                    for e in erros:
+                        st.error(e)
+                else:
+                    # Criar DataFrame para download e envio
+                    df_bh = pd.DataFrame(registros_validos)
+                    # Inserir nome do funcionário na primeira coluna
+                    df_bh.insert(0, "Nome do funcionário", nome)
+                    csv_bytes = df_bh.to_csv(index=False).encode("utf-8")
+                    st.success("Solicitações BH preparadas com sucesso!")
+                    st.download_button(
+                        "📥 Baixar cópia (CSV) - BH",
+                        data=csv_bytes,
+                        file_name=f"solicitacao_bh_{nome.replace(' ', '_')}.csv",
+                        mime="text/csv"
+                    )
+                    # Envia email automático com anexo para o RH
+                    if enviar_email_com_anexo(nome, df_bh):
+                        st.success("📧 Email com solicitações BH enviado para o RH com sucesso!")
+                    st.balloons()

@@ -5,3 +5,5 @@ streamlit-calendar
 python-dateutil
 holidays
 python-dotenv
+gspread
+google-auth
