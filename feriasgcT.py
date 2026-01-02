@@ -136,7 +136,7 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "BH_Banco de Horas"])
+aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "⏱️ Banco de Horas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
