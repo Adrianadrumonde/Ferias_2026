@@ -33,7 +33,7 @@ FUNCIONARIOS = sorted(FUNCIONARIOS)
 # CONFIGURAÇÃO INICIAL
 # =========================
 st.set_page_config(page_title="Gestão de Férias", page_icon="🏖️", layout="centered")
-st.title("🏖️ Sistema de Solicitação de Férias")
+st.title("🏖️ Sistema de Solicitação de Férias e Banco de Horas")
 
 ARQUIVO_CSV = "ferias.csv"
 
@@ -295,7 +295,7 @@ elif aba == "📊 Visualizar Solicitações":
 # =========================
 # ABA 3 – BH / BANCO DE HORAS
 # =========================
-elif aba == "BH_Banco de Horas":
+elif aba == "⏱️ Banco de Horas":
 
     if not st.session_state.get("autenticado_func", False):
         st.header("🔐 Acesso ao Formulário BH")
@@ -356,7 +356,7 @@ elif aba == "BH_Banco de Horas":
                             partes.append("Manhã")
                         if r["Tarde"]:
                             partes.append("Tarde")
-                        parte_str = ";".join(partes)
+                        parte_str = ",".join(partes)
                         registros_validos.append({
                             "Período": r["Período"],
                             "Data": r["Data"],
