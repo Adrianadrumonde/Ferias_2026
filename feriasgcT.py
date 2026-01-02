@@ -356,7 +356,7 @@ elif aba == "⏱️ Banco de Horas":
                             partes.append("Manhã")
                         if r["Tarde"]:
                             partes.append("Tarde")
-                        parte_str = ",".join(partes)
+                        parte_str = ";".join(partes)
                         registros_validos.append({
                             "Período": r["Período"],
                             "Data": r["Data"],
