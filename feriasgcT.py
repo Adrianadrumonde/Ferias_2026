@@ -150,10 +150,11 @@ if aba == "📅 Solicitar Férias":
             if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
                 st.session_state.autenticado_func = True
                 st.success("Acesso autorizado!")
-                st.experimental_rerun()
             else:
                 st.error("Código incorreto.")
-        st.stop()
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_func", False):
+            st.stop()
 
     st.header("📅 Solicitação de Férias")
     nome = st.selectbox("Nome do funcionário", FUNCIONARIOS)
@@ -227,10 +228,11 @@ elif aba == "📊 Visualizar Solicitações":
             if senha.strip().lower() == SENHA_RH.lower():
                 st.session_state.autenticado_rh = True
                 st.success("Acesso autorizado!")
-                st.experimental_rerun()
             else:
                 st.error("Senha incorreta.")
-        st.stop()
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_rh", False):
+            st.stop()
 
     st.header("📊 Solicitações Registradas")
 
@@ -302,10 +304,11 @@ elif aba == "BH_Banco de Horas":
             if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
                 st.session_state.autenticado_func = True
                 st.success("Acesso autorizado!")
-                st.experimental_rerun()
             else:
                 st.error("Código incorreto.")
-        st.stop()
+        # Se depois do clique ainda não estiver autenticado, interrompe aqui
+        if not st.session_state.get("autenticado_func", False):
+            st.stop()
 
     st.header("⏱️ Solicitação BH - Banco de Horas")
     nome = st.selectbox("Nome do funcionário", FUNCIONARIOS)
