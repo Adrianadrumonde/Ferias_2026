@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import date, timedelta
@@ -44,15 +43,12 @@ ARQUIVO_CSV = "ferias.csv"
 feriados_pt = holidays.country_holidays("PT")
 #feriados_pt = holidays.Portugal()
 
-
-
 # Mealhada 2026 e 2027
 feriados_pt[date(2026, 5, 14)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2027, 5, 20)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2028, 5, 28)] = "Feriado Municipal da Mealhada"
 feriados_pt[date(2029, 5, 30)] = "Feriado Municipal da Mealhada"
 
-# =========================
 # =========================
 # FUNÇÃO DIAS ÚTEIS
 # =========================
@@ -140,20 +136,21 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "BH_Banco de Hora"])
+aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "BH_Banco de Horas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
 # =========================
 if aba == "📅 Solicitar Férias":
 
-    if not st.session_state.autenticado_func:
+    if not st.session_state.get("autenticado_func", False):
         st.header("🔐 Acesso ao Formulário")
         senha = st.text_input("Código de acesso:", type="password")
         if st.button("Entrar"):
-            if senha == SENHA_FUNCIONARIO:
+            if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
                 st.session_state.autenticado_func = True
                 st.success("Acesso autorizado!")
+                st.experimental_rerun()
             else:
                 st.error("Código incorreto.")
         st.stop()
@@ -223,13 +220,14 @@ if aba == "📅 Solicitar Férias":
 # =========================
 elif aba == "📊 Visualizar Solicitações":
 
-    if not st.session_state.autenticado_rh:
+    if not st.session_state.get("autenticado_rh", False):
         st.header("🔐 Área do RH")
         senha = st.text_input("Senha RH:", type="password")
         if st.button("Entrar RH"):
-            if senha == SENHA_RH:
+            if senha.strip().lower() == SENHA_RH.lower():
                 st.session_state.autenticado_rh = True
                 st.success("Acesso autorizado!")
+                st.experimental_rerun()
             else:
                 st.error("Senha incorreta.")
         st.stop()
@@ -244,12 +242,6 @@ elif aba == "📊 Visualizar Solicitações":
     df["Data de Início"] = pd.to_datetime(df["Data de Início"])
     df["Data de Término"] = pd.to_datetime(df["Data de Término"])
 
-    #nomes = ["(Todos)"] + sorted(df["Nome"].unique())
-    #filtro = st.selectbox("Filtrar funcionário:", nomes)
-
-    #if filtro != "(Todos)":
-        #df = df[df["Nome"] == filtro]
-    
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
@@ -303,13 +295,14 @@ elif aba == "📊 Visualizar Solicitações":
 # =========================
 elif aba == "BH_Banco de Horas":
 
-    if not st.session_state.autenticado_func:
+    if not st.session_state.get("autenticado_func", False):
         st.header("🔐 Acesso ao Formulário BH")
         senha = st.text_input("Código de acesso (BH):", type="password")
         if st.button("Entrar BH"):
-            if senha == SENHA_FUNCIONARIO:
+            if senha.strip().lower() == SENHA_FUNCIONARIO.lower():
                 st.session_state.autenticado_func = True
                 st.success("Acesso autorizado!")
+                st.experimental_rerun()
             else:
                 st.error("Código incorreto.")
         st.stop()
