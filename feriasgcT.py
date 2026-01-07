@@ -297,9 +297,9 @@ elif aba == "📊 Visualizar Solicitações":
     dados = sheet.get_all_records()
     df = pd.DataFrame(dados)
     if "Data de Início" in df.columns:
-        df["Data de Início"] = pd.to_datetime(df["Data de Início"])
+        df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
     if "Data de Fim" in df.columns:
-        df["Data de Fim"] = pd.to_datetime(df["Data de Fim"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_Fim"])
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
