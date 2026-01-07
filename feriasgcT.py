@@ -287,8 +287,11 @@ elif aba == "📊 Visualizar Solicitações":
     
     st.header("📊 Solicitações Registradas")
 
-    if not os.path.exists(ARQUIVO_CSV):
-        st.info("Nenhuma solicitação encontrada.")
+    dados = sheet.get_all_records()
+    df = pd.DataFrame(dados)
+    
+    if df.empty:
+        st.info("Nenhuma solicitação encontrada no Google Sheets.")
         st.stop()
     # Carregar dados do Google Sheets
     dados = sheet.get_all_records()
