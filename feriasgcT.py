@@ -20,7 +20,10 @@ if "email_enviado" not in st.session_state:
 if "email_formulario_enviado" not in st.session_state:
     st.session_state.email_formulario_enviado = False
 # =========================
-scope = ["https://www.googleapis.com/auth/spreadsheets"]
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.readonly",
+]
 
 creds = Credentials.from_service_account_info(
     st.secrets.gcp_service_account,
@@ -165,7 +168,7 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "⏱️ Banco de Horas"])
+aba = st.sidebar.radio("📂 Menu", ["📊 Visualizar Solicitações", "📅 Solicitar Férias", "⏱️ Banco de Horas", "Férias aprovadas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
@@ -464,3 +467,49 @@ elif aba == "⏱️ Banco de Horas":
                             st.success("📧 Email com solicitações BH enviado para o RH com sucesso!")
                             st.session_state.email_enviado = True
                     st.balloons()
+
+# =========================
+# ABA 4 – FÉRIAS APROVADAS (SOMENTE LEITURA)
+# =========================
+elif aba == "Férias aprovadas":
+
+    st.header("📁 Férias aprovadas (apenas leitura)")
+    try:
+        aprov_sheet = spreadsheet.worksheet("Férias_aprovadas")
+        # Construir link de visualização para a folha específica (usa gid do worksheet)
+        gid = getattr(aprov_sheet, "id", None)
+        sheet_key = st.secrets.get("sheet_id")
+        if sheet_key and gid is not None:
+            # Tentar exportar apenas a folha específica como PDF usando as credenciais do serviço
+            try:
+                from google.auth.transport.requests import AuthorizedSession
+
+                authed_session = AuthorizedSession(creds)
+                export_url = (
+                    f"https://docs.google.com/spreadsheets/d/{sheet_key}/export"
+                    f"?format=pdf&gid={gid}&portrait=true&size=A4&fitw=true"
+                )
+                resp = authed_session.get(export_url)
+                if resp.status_code == 200:
+                    pdf_bytes = resp.content
+                    b64 = base64.b64encode(pdf_bytes).decode("utf-8")
+                    pdf_display = f"<iframe src=\"data:application/pdf;base64,{b64}\" width=\"100%\" height=800></iframe>"
+                    st.components.v1.html(pdf_display, height=820)
+                    # Oferecer botão de download do PDF
+                    st.download_button("📥 Baixar PDF - Férias Aprovadas", data=pdf_bytes, file_name="ferias_aprovadas.pdf", mime="application/pdf")
+                else:
+                    # Se a exportação falhar, mostrar link de visualização como fallback
+                    view_url = f"https://docs.google.com/spreadsheets/d/{sheet_key}/edit#gid={gid}"
+                    st.markdown(f"Link de visualização (abre no Google Sheets): [Abrir 'Férias_aprovadas']({view_url})")
+                    st.info("Nota: o ficheiro deve estar partilhado com quem vai visualizar (pelo menos 'Ver').")
+            except Exception as e:
+                view_url = f"https://docs.google.com/spreadsheets/d/{sheet_key}/edit#gid={gid}"
+                st.markdown(f"Link de visualização (abre no Google Sheets): [Abrir 'Férias_aprovadas']({view_url})")
+                st.info("Nota: o ficheiro deve estar partilhado com quem vai visualizar (pelo menos 'Ver').")
+        else:
+            st.warning("Não foi possível construir o link de visualização (chave da sheet ou gid em falta).")
+
+        # Sem fallback de download: apenas link e tentativa de iframe para visualização
+
+    except Exception as e:
+        st.error(f"Erro ao carregar a folha 'Férias_aprovadas': {e}")
