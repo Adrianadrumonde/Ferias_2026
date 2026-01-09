@@ -47,7 +47,7 @@ DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
 # =========================
 # LISTA DE FUNCIONÁRIOS
 # =========================
-FUNCIONARIOS = ["Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
+FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
                 "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
                 "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
