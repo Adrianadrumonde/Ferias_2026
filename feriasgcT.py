@@ -13,6 +13,7 @@ from email.mime.application import MIMEApplication
 import streamlit as st
 from google.oauth2.service_account import Credentials
 import gspread
+import base64
 
 # FLAG para evitar envio de email repetido
 if "email_enviado" not in st.session_state:
@@ -300,9 +301,9 @@ elif aba == "📊 Visualizar Solicitações":
     dados = sheet.get_all_records()
     df = pd.DataFrame(dados)
     if "Data de Início" in df.columns:
-        df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
+        df["Data_Inicio"] = pd.to_datetime(df["Data_Início"])
     if "Data de Fim" in df.columns:
-        df["Data_Fim"] = pd.to_datetime(df["Data_Fim"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_de_Fim"])
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
        "Filtrar funcionário(s):",
@@ -500,15 +501,9 @@ elif aba == "Férias aprovadas":
                 }
                 headers = {"Accept": "application/pdf"}
                 resp = authed_session.get(export_url, params=params, headers=headers, allow_redirects=True)
-                # Mostrar final URL e histórico de redirecionamentos para diagnóstico
-                #st.info(f"Export final URL: {resp.url}")
-                #if resp.history:
-                 #   hist_info = " -> ".join([f"{h.status_code}:{h.url}" for h in resp.history])
-                  #  st.info(f"Redirect history: {hist_info}")
-                # Mostrar status code e info na UI para depuração
-                #st.info(f"Export request status: {resp.status_code}")
-                #content_type = resp.headers.get("content-type", "")
-                #st.info(f"Content-Type: {content_type}; bytes: {len(resp.content)}")
+
+                # Obter content-type de forma segura antes de usar
+                content_type = resp.headers.get("content-type", "")
 
                 # Verificar se a resposta é um PDF válido antes de embutir
                 if resp.status_code == 200 and "pdf" in content_type.lower() and len(resp.content) > 1000:
@@ -520,22 +515,13 @@ elif aba == "Férias aprovadas":
                     # Oferecer botão de download (funciona mesmo que o embed seja bloqueado)
                     st.download_button("📥 Baixar PDF - Férias Aprovadas", data=pdf_bytes, file_name="ferias_aprovadas.pdf", mime="application/pdf")
 
-                    # Forçar download também com link 'data:' (alguns navegadores/versões processam melhor o anchor+download)
-                    try:
-                        b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-                        href = f'data:application/pdf;base64,{b64}'
-                        anchor = f"<a href=\"{href}\" download=\"ferias_aprovadas.pdf\">Abrir/Descarregar PDF em nova aba</a>"
-                        st.markdown(anchor, unsafe_allow_html=True)
-                    except Exception:
-                        pass
-
                     # Tentar embutir (pode ser bloqueado pelo browser)
                     try:
                         b64 = base64.b64encode(pdf_bytes).decode("utf-8")
                         pdf_display = f"<iframe src=\"data:application/pdf;base64,{b64}\" width=\"100%\" height=800></iframe>"
                         st.components.v1.html(pdf_display, height=820)
                     except Exception:
-                        st.warning("Embed falhou use o botão de download ou o link de baixar acima.")
+                        st.warning("Embed falhou use o botão de download acima.")
                 else:
                     # Não mostrar link de visualização para evitar pedidos de acesso de utilizadores
                     st.error("Export não retornou um PDF válido (ver detalhes abaixo). Não será mostrado o link de visualização para evitar pedidos de acesso automáticos.")
@@ -549,9 +535,7 @@ elif aba == "Férias aprovadas":
             except Exception as e:
                 # Mostrar o erro na UI para depuração
                 st.error(f"Erro na exportação PDF (AuthorizedSession): {e}")
-                view_url = f"https://docs.google.com/spreadsheets/d/{sheet_key}/edit#gid={gid}"
-                st.markdown(f"Link de visualização (abre no Google Sheets): [Abrir 'Férias_aprovadas']({view_url})")
-                st.info("Nota: o ficheiro deve estar partilhado com quem vai visualizar (pelo menos 'Ver').")
+                st.info("Nota: não foi mostrado o link de visualização automática por motivos de segurança.")
         else:
             st.warning("Não foi possível construir o link de visualização (chave da sheet ou gid em falta).")
 
