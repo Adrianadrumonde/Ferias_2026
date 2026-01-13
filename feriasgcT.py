@@ -535,7 +535,7 @@ elif aba == "Férias aprovadas":
                         pdf_display = f"<iframe src=\"data:application/pdf;base64,{b64}\" width=\"100%\" height=800></iframe>"
                         st.components.v1.html(pdf_display, height=820)
                     except Exception:
-                        "st.warning("Embed falhou — use o botão de download ou o link de baixar acima.")
+                        "st.warning("Embed falhou use o botão de download ou o link de baixar acima.")
                 else:
                     # Não mostrar link de visualização para evitar pedidos de acesso de utilizadores
                     st.error("Export não retornou um PDF válido (ver detalhes abaixo). Não será mostrado o link de visualização para evitar pedidos de acesso automáticos.")
