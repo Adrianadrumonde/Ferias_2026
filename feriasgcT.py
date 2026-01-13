@@ -493,7 +493,7 @@ elif aba == "Férias aprovadas":
                     "gid": str(gid),
                     "portrait": "true",
                     "size": "A4",
-                    "fitw": "true",
+                    #"fitw": "false",
                     "gridlines": "false",
                     "printtitle": "false",
                     "sheetnames": "false",
