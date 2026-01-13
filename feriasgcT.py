@@ -501,14 +501,14 @@ elif aba == "Férias aprovadas":
                 headers = {"Accept": "application/pdf"}
                 resp = authed_session.get(export_url, params=params, headers=headers, allow_redirects=True)
                 # Mostrar final URL e histórico de redirecionamentos para diagnóstico
-                st.info(f"Export final URL: {resp.url}")
-                if resp.history:
-                    hist_info = " -> ".join([f"{h.status_code}:{h.url}" for h in resp.history])
-                    st.info(f"Redirect history: {hist_info}")
+                #st.info(f"Export final URL: {resp.url}")
+               # if resp.history:
+                #    hist_info = " -> ".join([f"{h.status_code}:{h.url}" for h in resp.history])
+                 #   st.info(f"Redirect history: {hist_info}")
                 # Mostrar status code e info na UI para depuração
-                st.info(f"Export request status: {resp.status_code}")
-                content_type = resp.headers.get("content-type", "")
-                st.info(f"Content-Type: {content_type}; bytes: {len(resp.content)}")
+                #st.info(f"Export request status: {resp.status_code}")
+                #content_type = resp.headers.get("content-type", "")
+                #st.info(f"Content-Type: {content_type}; bytes: {len(resp.content)}")
 
                 # Verificar se a resposta é um PDF válido antes de embutir
                 if resp.status_code == 200 and "pdf" in content_type.lower() and len(resp.content) > 1000:
@@ -535,7 +535,7 @@ elif aba == "Férias aprovadas":
                         pdf_display = f"<iframe src=\"data:application/pdf;base64,{b64}\" width=\"100%\" height=800></iframe>"
                         st.components.v1.html(pdf_display, height=820)
                     except Exception:
-                        st.warning("Embed falhou — use o botão de download ou o link de baixar acima.")
+                        "st.warning("Embed falhou — use o botão de download ou o link de baixar acima.")
                 else:
                     # Não mostrar link de visualização para evitar pedidos de acesso de utilizadores
                     st.error("Export não retornou um PDF válido (ver detalhes abaixo). Não será mostrado o link de visualização para evitar pedidos de acesso automáticos.")
