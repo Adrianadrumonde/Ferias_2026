@@ -61,6 +61,60 @@ FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barra
                 ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
+MAPA_SECCOES = {
+    "Adriana Drumonde": "GAT",
+    "Carla Sério": "GAT",
+    "Elsa Barracho": "GESTÃO E SEC",
+    "Sandra Paulo": "GESTÃO E SEC",
+    "João Pereira": "GESTÃO E SEC",
+    "Maria Paulino": "GESTÃO E SEC",
+
+    "Andreia Mendes": "LOG.",
+    "Sarah Silva": "LOG.",
+    "Armanda Fernandes": "LOG.",
+
+    "M.ª do Céu Martins": "Apoio Lab.",
+    "Ana Joaquina": "Apoio Lab.",
+    "André Barandas": "Apoio Lab.",
+    "Brenda Santos": "Apoio Lab.",
+
+    "Alexandra Rajado": "Laboratório",
+    "Diogo Reis": "Laboratório",
+    "Liliana Nisa": "Laboratório",
+    "Sandra Pinheiro": "Laboratório",
+    "Mónica Cerveira": "Laboratório",
+    "Cláudia Bernardes": "Laboratório",
+    "Beatriz Martinho": "Laboratório",
+    "Eliari Silva": "Laboratório",
+    "Marta Pedroso": "Laboratório",
+    "Bruno Albuquerque": "Laboratório",
+    "Jaqueline Reis": "Laboratório",
+    "Carina Gonçalves": "Laboratório",
+
+    "Vítor Antunes": "Colheitas",
+    "Óscar Soares": "Colheitas",
+    "Rúben Rosa": "Colheitas",
+    "Catarina Torres": "Colheitas",
+    "André Martins": "Colheitas",
+    "Rafael Vivas": "Colheitas",
+    "Telmo Menoita": "Colheitas",
+    "Edgar Martins": "Colheitas",
+    "Bruno Santos": "Colheitas",
+    "Renato Alves": "Colheitas",
+    "Fábio Pego": "Colheitas",
+    "Tiago Daniel": "Colheitas",
+    "Gabriel Pinto": "Colheitas",
+    "Tomás Fernandes": "Colheitas",
+    "Tiago Costa": "Colheitas",
+}
+MAPA_EMAIL_SECCAO = {
+    "GAT": "a.drumonde@cesab.pt",
+    "GESTÃO E SEC": "j.pereira@cesab.pt",
+    "LOG.": "j.pereira@cesab.pt",
+    "Apoio Lab.": "j.pereira@cesab.pt",
+    "Laboratório": "laboratorio@cesab.pt",
+    "Colheitas": "g.tecnico@cesab.pt",
+}
 # =========================
 # CONFIGURAÇÃO INICIAL
 # =========================
@@ -137,6 +191,10 @@ def salvar_solicitacao(nome, periodos):
 def enviar_email_com_anexo(nome, df_periodos):
     
     try:
+        # descobrir a secção pelo nome
+        seccao = MAPA_SECCOES.get(nome, None)
+        # descobrir email da secção
+        email_seccao = MAPA_EMAIL_SECCAO.get(seccao)
         # Preparar email
         subject = f"Solicitação de Férias_BH - {nome}"
         body = "Segue em anexo a solicitação de férias."
@@ -145,7 +203,13 @@ def enviar_email_com_anexo(nome, df_periodos):
         msg['From'] = SMTP_USER
         msg['To'] = DESTINO_EMAIL
         msg['Subject'] = subject
-
+        # CC apenas se existir email para a secção
+        if email_seccao:
+            msg['Cc'] = email_seccao
+            destinatarios = [DESTINO_EMAIL, email_seccao]
+        else:
+            destinatarios = [DESTINO_EMAIL]
+        
         msg.attach(MIMEText(body, "plain"))
 
         # Converte DataFrame para CSV em bytes
@@ -158,8 +222,8 @@ def enviar_email_com_anexo(nome, df_periodos):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
             server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SMTP_USER, DESTINO_EMAIL, msg.as_string())
-
+           # server.sendmail(SMTP_USER, DESTINO_EMAIL, msg.as_string())
+            server.sendmail(SMTP_USER, destinatarios, msg.as_string())
         return True
     except Exception as e:
         # Para debug, mostre erro no Streamlit
@@ -290,26 +354,30 @@ elif aba == "📊 Visualizar Solicitações":
         st.stop()
     
     st.header("📊 Solicitações Registradas")
-
+#carregar os dados uma única vez
     dados = sheet.get_all_records()
     df = pd.DataFrame(dados)
-    
+
     if df.empty:
         st.info("Nenhuma solicitação encontrada no Google Sheets.")
         st.stop()
-    # Carregar dados do Google Sheets
-    dados = sheet.get_all_records()
-    df = pd.DataFrame(dados)
+ # ---- CRIAR COLUNA SECÇÃO ----
+    df["Secção"] = df["Nome"].map(MAPA_SECCOES).fillna("Sem Secção")
+
+# Conversão de datas
     if "Data de Início" in df.columns:
-        df["Data_Inicio"] = pd.to_datetime(df["Data_Início"])
+        df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
     if "Data de Fim" in df.columns:
-        df["Data_Fim"] = pd.to_datetime(df["Data_de_Fim"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_de_im"])
+ # Filtro por secção
+    seccoes = sorted(df["Secção"].unique())
+    filtro_seccao = st.multiselect("Filtrar secção:", seccoes)
+    if filtro_seccao:
+        df = df[df["Secção"].isin(filtro_seccao)]
+ #Filtro por funcionário   
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
-       "Filtrar funcionário(s):",
-     nomes
-    )
-
+       "Filtrar funcionário(s):",nomes)
     if filtros:
      df = df[df["Nome"].isin(filtros)]
 
@@ -491,9 +559,11 @@ elif aba == "Férias aprovadas":
                     "exportFormat": "pdf",
                     "format": "pdf",
                     "gid": str(gid),
-                    "portrait": "true",
+                    # request landscape A4 and prefer fitting to sheet page breaks/width
+                    "portrait": "false",
                     "size": "A4",
-                    #"fitw": "false",
+                    "scale": "1", 
+                    "fitw": "false",
                     "gridlines": "false",
                     "printtitle": "false",
                     "sheetnames": "false",
@@ -512,7 +582,111 @@ elif aba == "Férias aprovadas":
                     is_pdf = pdf_bytes.startswith(b"%PDF")
                     st.info(f"PDF header valid: {is_pdf}")
 
+                    # Detectar número de colunas congeladas (se disponível nas propriedades do worksheet)
+                    try:
+                        frozen_cols = int(getattr(aprov_sheet, '_properties', {}).get('gridProperties', {}).get('frozenColumnCount', 0) or 0)
+                    except Exception:
+                        frozen_cols = 0
+                    st.info(f"Colunas congeladas detectadas na folha: {frozen_cols}")
+
+                    # Oferecer opção de pós-processamento para repetir colunas congeladas
+                    repetir = st.checkbox("Repetir colunas congeladas em cada página (pós-processamento)", value=False)
+                    if repetir and frozen_cols == 0:
+                        st.warning("Nenhuma coluna congelada detectada; o pós-processamento não fará sentido.")
+                        repetir = False
+                    if repetir:
+                        try:
+                            import fitz  # pymupdf
+                        except Exception:
+                            st.error("Biblioteca 'pymupdf' não encontrada. Instale com: pip install pymupdf")
+                            repetir = False
+
+                    # Antes do download: se o PDF vier numa única página muito alta,
+                    # dividir em páginas A4 (paisagem) para preservar quebras/legibilidade.
+                    try:
+                        import fitz
+                        src_tmp = fitz.open(stream=pdf_bytes, filetype="pdf")
+                        page_count_tmp = src_tmp.page_count
+                    except Exception:
+                        src_tmp = None
+                        page_count_tmp = None
+
+                    def split_long_pdf_to_a4(pdf_bytes_in, orientation_landscape=True, dpi=150):
+                        import fitz, math
+                        src = fitz.open(stream=pdf_bytes_in, filetype="pdf")
+                        # A4 sizes in points (portrait: width=595.276, height=841.89)
+                        if orientation_landscape:
+                            target_h = 595.276
+                        else:
+                            target_h = 841.89
+
+                        if src.page_count > 1:
+                            return pdf_bytes_in
+
+                        p = src[0]
+                        r = p.rect
+                        # If page height is already approximately target, return
+                        if r.height <= target_h + 2:
+                            return pdf_bytes_in
+
+                        out = fitz.open()
+                        n_slices = math.ceil(r.height / target_h)
+                        for i in range(n_slices):
+                            top = i * target_h
+                            bottom = min((i + 1) * target_h, r.height)
+                            clip = fitz.Rect(0, top, r.width, bottom)
+                            pix = p.get_pixmap(clip=clip, dpi=dpi)
+                            img_bytes = pix.tobytes("png")
+                            newp = out.new_page(width=r.width, height=(bottom - top))
+                            newp.insert_image(fitz.Rect(0, 0, r.width, (bottom - top)), stream=img_bytes)
+
+                        return out.tobytes()
+
+                    # Tentar dividir se for apenas uma página longa
+                    if page_count_tmp == 1:
+                        try:
+                            pdf_bytes = split_long_pdf_to_a4(pdf_bytes, orientation_landscape=True)
+                            st.info("PDF dividido em várias páginas A4 quando necessário.")
+                        except Exception as e:
+                            st.warning(f"Não foi possível dividir o PDF em páginas A4: {e}")
+
                     # Oferecer botão de download (funciona mesmo que o embed seja bloqueado)
+                    if repetir:
+                        try:
+                            def repeat_left_columns(pdf_bytes_in, frozen_cols):
+                                import fitz
+
+                                src = fitz.open(stream=pdf_bytes_in, filetype="pdf")
+                                out = fitz.open()
+
+                                # Determine left width from first page
+                                first = src[0]
+                                r = first.rect
+                                # estimate left width: proportion of page width per frozen column
+                                left_w = max(100, min(r.width * 0.5, r.width * (0.08 * max(1, frozen_cols))))
+
+                                left_rect = fitz.Rect(0, 0, left_w, r.height)
+                                left_pix = first.get_pixmap(clip=left_rect, dpi=150)
+                                left_png = left_pix.tobytes("png")
+
+                                for p in src:
+                                    r = p.rect
+                                    full_pix = p.get_pixmap(dpi=150)
+                                    full_png = full_pix.tobytes("png")
+
+                                    newp = out.new_page(width=r.width, height=r.height)
+                                    newp.insert_image(fitz.Rect(0, 0, r.width, r.height), stream=full_png)
+                                    # overlay left frozen area
+                                    newp.insert_image(fitz.Rect(0, 0, left_w, r.height), stream=left_png)
+
+                                return out.tobytes()
+
+                            processed = repeat_left_columns(pdf_bytes, frozen_cols)
+                            pdf_bytes = processed
+                            st.success("Pós-processamento concluído: colunas repetidas em cada página.")
+                        except Exception as e:
+                            st.error(f"Erro no pós-processamento: {e}")
+
                     st.download_button("📥 Baixar PDF - Férias Aprovadas", data=pdf_bytes, file_name="ferias_aprovadas.pdf", mime="application/pdf")
 
                     # Tentar embutir (pode ser bloqueado pelo browser)
