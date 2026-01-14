@@ -10,7 +10,6 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import streamlit as st
 from google.oauth2.service_account import Credentials
 import gspread
 import base64
