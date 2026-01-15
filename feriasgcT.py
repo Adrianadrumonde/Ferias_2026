@@ -52,7 +52,7 @@ DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
 # =========================
 FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
                 "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
-                "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Ana Joaquina","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
                 "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
@@ -150,8 +150,8 @@ def dias_uteis(inicio, fim):
 # =========================
 # SENHAS
 # =========================
-SENHA_FUNCIONARIO = "ferias2025"
-SENHA_RH = "rh123"
+SENHA_FUNCIONARIO = st.secrets["SENHA_FUNCIONARIO"]
+SENHA_RH = st.secrets["SENHA_RH"]
 
 if "autenticado_func" not in st.session_state:
     st.session_state.autenticado_func = False
@@ -367,7 +367,10 @@ elif aba == "📊 Visualizar Solicitações":
     if "Data de Início" in df.columns:
         df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
     if "Data de Fim" in df.columns:
-        df["Data_Fim"] = pd.to_datetime(df["Data_de_im"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_de_Fim"])
+    if "Dias_Úteis" in df.columns:
+        df["Dias_Úteis"] = pd.to_numeric(df["Dias_Úteis"], errors="coerce")
+ 
  # Filtro por secção
     seccoes = sorted(df["Secção"].unique())
     filtro_seccao = st.multiselect("Filtrar secção:", seccoes)
@@ -379,8 +382,13 @@ elif aba == "📊 Visualizar Solicitações":
        "Filtrar funcionário(s):",nomes)
     if filtros:
      df = df[df["Nome"].isin(filtros)]
-
-    st.dataframe(df, use_container_width=True)
+    
+    # Remover Observações apenas da visualização
+    df_vis = df.drop(
+    columns=["Observações", "Timestamp", "Secção"],
+    errors="ignore")
+   
+    st.dataframe(df_vis, use_container_width=True)
 
    
 # ----------------------
@@ -560,7 +568,7 @@ elif aba == "Férias aprovadas":
                     "gid": str(gid),
                     # request landscape A4 and prefer fitting to sheet page breaks/width
                     "portrait": "false",
-                    "size": "A4",
+                    "size": "A3",
                     "scale": "1", 
                     "fitw": "false",
                     "gridlines": "false",
