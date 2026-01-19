@@ -105,8 +105,8 @@ MAPA_SECCOES = {
     "Fábio Pego": "Colheitas",
     "Tiago Daniel": "Colheitas",
     "Gabriel Pinto": "Colheitas",
-    "Tomás Fernandes": "Colheitas",
     "Tiago Costa": "Colheitas",
+    "Tomas Fernandes":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
     "GAT": "a.drumonde@cesab.pt",
@@ -396,45 +396,55 @@ elif aba == "📊 Visualizar Solicitações":
 # ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
-    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
-    # Filtrar apenas férias
-    df_ferias = df[df["Tipo"] == "FERIAS"].copy()
+    st.subheader("📅 Períodos de Férias e Banco de Horas (BH) Solicitados")
+   
+    df_gantt = df.copy()
 
-    if df_ferias.empty:
-        st.info("Não existem solicitações de férias para mostrar.")
-    else:
-        #Converter datas (sabemos que estas colunas existem nas férias)
-        df_ferias["Data_Inicio"] = pd.to_datetime(df_ferias["Data_Inicio"])
-        df_ferias["Data_Fim"] = pd.to_datetime(df_ferias["Data_Fim"])
-        # Garantir duração mínima para o gráfico
-        df_ferias["Data_Fim_plot"] = df_ferias["Data_Fim"]
-        df_ferias.loc[
-            df_ferias["Data_Fim_plot"] <= df_ferias["Data_Inicio"],
-            "Data_Fim_plot"
-        ] = df_ferias["Data_Inicio"] + pd.Timedelta(days=1)
-        
-        # Período como texto (cores)
-        df_ferias["Período"] = df_ferias["Período"].astype(str)
+    # Converter datas
+    df_gantt["Data_Inicio"] = pd.to_datetime(df_gantt["Data_Inicio"])
+    df_gantt["Data_Fim"] = pd.to_datetime(df_gantt["Data_Fim"])
 
-        fig = px.timeline(
-            df_ferias,
-            x_start="Data_Inicio",
-            x_end="Data_Fim_plot",
-            y="Nome",
-            color="Período",
-            hover_data=["Dias_Úteis", "Observações", "Data_Fim"]
-        )
-        fig.update_yaxes(autorange="reversed")
-        st.plotly_chart(fig, use_container_width=True)
+    # Criar coluna de fim para o gráfico
+    df_gantt["Data_Fim_plot"] = df_gantt["Data_Fim"]
 
-    # download geral
-    csv_full = df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Baixar CSV Completo",
-        data=csv_full,
-        file_name="solicitacoes_ferias.csv",
-        mime="text/csv"
+    # Tratar BH (Banco de Horas)
+    mask_bh = df_gantt["Tipo"] == "BH"
+
+    def calcular_fim_bh(row):
+        horas = 0
+        if row["Parte"]:
+            if "Manhã" in row["Parte"]:
+                horas += 4
+            if "Tarde" in row["Parte"]:
+                horas += 4
+        if horas == 0:
+            horas = 4  # fallback seguro
+        return row["Data_Inicio"] + pd.Timedelta(hours=horas)
+    df_gantt.loc[mask_bh, "Data_Fim_plot"] = df_gantt[mask_bh].apply(
+        calcular_fim_bh, axis=1
     )
+    # Garantir duração mínima para férias
+    df_gantt.loc[
+        df_gantt["Data_Fim_plot"] <= df_gantt["Data_Inicio"],
+        "Data_Fim_plot"
+    ] = df_gantt["Data_Inicio"] + pd.Timedelta(days=1)
+
+    fig = px.timeline(
+        df_gantt,
+        x_start="Data_Inicio",
+        x_end="Data_Fim_plot",
+        y="Nome",
+        color="Tipo",  # FERIAS vs BH
+        color_discrete_map={
+            "FERIAS": "blue",
+            "BH": "gray"
+        },
+        hover_data=["Tipo", "Parte", "Dias_Úteis"]
+    )
+
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True)
+
 # =========================
 # ABA 3 – BH / BANCO DE HORAS
 # =========================
