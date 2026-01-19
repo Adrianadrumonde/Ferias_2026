@@ -109,7 +109,7 @@ MAPA_SECCOES = {
     "Tomas Fernandes":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
-    "GAT": "a.drumonde@cesab.pt",
+    "GAT": "j.pereira@cesab.pt",
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
