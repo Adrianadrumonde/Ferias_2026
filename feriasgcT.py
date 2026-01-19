@@ -10,10 +10,11 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import streamlit as st
 from google.oauth2.service_account import Credentials
 import gspread
 import base64
+
+
 
 # FLAG para evitar envio de email repetido
 if "email_enviado" not in st.session_state:
@@ -53,7 +54,7 @@ DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
 # =========================
 FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
                 "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
-                "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Ana Joaquina","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
                 "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
@@ -104,8 +105,8 @@ MAPA_SECCOES = {
     "Fábio Pego": "Colheitas",
     "Tiago Daniel": "Colheitas",
     "Gabriel Pinto": "Colheitas",
-    "Tomás Fernandes": "Colheitas",
     "Tiago Costa": "Colheitas",
+    "Tomas Fernandes":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
     "GAT": "a.drumonde@cesab.pt",
@@ -151,8 +152,8 @@ def dias_uteis(inicio, fim):
 # =========================
 # SENHAS
 # =========================
-SENHA_FUNCIONARIO = "ferias2025"
-SENHA_RH = "rh123"
+SENHA_FUNCIONARIO = st.secrets["SENHA_FUNCIONARIO"]
+SENHA_RH = st.secrets["SENHA_RH"]
 
 if "autenticado_func" not in st.session_state:
     st.session_state.autenticado_func = False
@@ -368,7 +369,10 @@ elif aba == "📊 Visualizar Solicitações":
     if "Data de Início" in df.columns:
         df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
     if "Data de Fim" in df.columns:
-        df["Data_Fim"] = pd.to_datetime(df["Data_de_im"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_de_Fim"])
+    if "Dias_Úteis" in df.columns:
+        df["Dias_Úteis"] = pd.to_numeric(df["Dias_Úteis"], errors="coerce")
+ 
  # Filtro por secção
     seccoes = sorted(df["Secção"].unique())
     filtro_seccao = st.multiselect("Filtrar secção:", seccoes)
@@ -380,52 +384,67 @@ elif aba == "📊 Visualizar Solicitações":
        "Filtrar funcionário(s):",nomes)
     if filtros:
      df = df[df["Nome"].isin(filtros)]
-
-    st.dataframe(df, use_container_width=True)
+    
+    # Remover Observações apenas da visualização
+    df_vis = df.drop(
+    columns=["Observações", "Timestamp", "Secção"],
+    errors="ignore")
+   
+    st.dataframe(df_vis, use_container_width=True)
 
    
 # ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
-    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
-    # Filtrar apenas férias
-    df_ferias = df[df["Tipo"] == "FERIAS"].copy()
+    st.subheader("📅 Períodos de Férias e Banco de Horas (BH) Solicitados")
+   
+    df_gantt = df.copy()
 
-    if df_ferias.empty:
-        st.info("Não existem solicitações de férias para mostrar.")
-    else:
-        #Converter datas (sabemos que estas colunas existem nas férias)
-        df_ferias["Data_Inicio"] = pd.to_datetime(df_ferias["Data_Inicio"])
-        df_ferias["Data_Fim"] = pd.to_datetime(df_ferias["Data_Fim"])
-        # Garantir duração mínima para o gráfico
-        df_ferias["Data_Fim_plot"] = df_ferias["Data_Fim"]
-        df_ferias.loc[
-            df_ferias["Data_Fim_plot"] <= df_ferias["Data_Inicio"],
-            "Data_Fim_plot"
-        ] = df_ferias["Data_Inicio"] + pd.Timedelta(days=1)
-        
-        # Período como texto (cores)
-        df_ferias["Período"] = df_ferias["Período"].astype(str)
+    # Converter datas
+    df_gantt["Data_Inicio"] = pd.to_datetime(df_gantt["Data_Inicio"])
+    df_gantt["Data_Fim"] = pd.to_datetime(df_gantt["Data_Fim"])
 
-        fig = px.timeline(
-            df_ferias,
-            x_start="Data_Inicio",
-            x_end="Data_Fim_plot",
-            y="Nome",
-            color="Período",
-            hover_data=["Dias_Úteis", "Observações", "Data_Fim"]
-        )
-        fig.update_yaxes(autorange="reversed")
-        st.plotly_chart(fig, use_container_width=True)
+    # Criar coluna de fim para o gráfico
+    df_gantt["Data_Fim_plot"] = df_gantt["Data_Fim"]
 
-    # download geral
-    csv_full = df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Baixar CSV Completo",
-        data=csv_full,
-        file_name="solicitacoes_ferias.csv",
-        mime="text/csv"
+    # Tratar BH (Banco de Horas)
+    mask_bh = df_gantt["Tipo"] == "BH"
+
+    def calcular_fim_bh(row):
+        horas = 0
+        if row["Parte"]:
+            if "Manhã" in row["Parte"]:
+                horas += 4
+            if "Tarde" in row["Parte"]:
+                horas += 4
+        if horas == 0:
+            horas = 4  # fallback seguro
+        return row["Data_Inicio"] + pd.Timedelta(hours=horas)
+    df_gantt.loc[mask_bh, "Data_Fim_plot"] = df_gantt[mask_bh].apply(
+        calcular_fim_bh, axis=1
     )
+    # Garantir duração mínima para férias
+    df_gantt.loc[
+        df_gantt["Data_Fim_plot"] <= df_gantt["Data_Inicio"],
+        "Data_Fim_plot"
+    ] = df_gantt["Data_Inicio"] + pd.Timedelta(days=1)
+
+    fig = px.timeline(
+        df_gantt,
+        x_start="Data_Inicio",
+        x_end="Data_Fim_plot",
+        y="Nome",
+        color="Tipo",  # FERIAS vs BH
+        color_discrete_map={
+            "FERIAS": "blue",
+            "BH": "gray"
+        },
+        hover_data=["Tipo", "Parte", "Dias_Úteis"]
+    )
+
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True)
+
 # =========================
 # ABA 3 – BH / BANCO DE HORAS
 # =========================
@@ -537,183 +556,45 @@ elif aba == "⏱️ Banco de Horas":
                             st.session_state.email_enviado = True
                     st.balloons()
 
+
 # =========================
 # ABA 4 – FÉRIAS APROVADAS (SOMENTE LEITURA)
 # =========================
 elif aba == "Férias aprovadas":
+   
+    # =========================
+    # AUTENTICAÇÃO RH (SOMENTE LEITURA)
+    # =========================
+    if "autenticado_ferias_aprovadas" not in st.session_state:
+        st.session_state.autenticado_ferias_aprovadas = False
 
-    st.header("📁 Férias aprovadas (apenas leitura)")
-    try:
-        aprov_sheet = spreadsheet.worksheet("Férias_aprovadas")
-        # Construir link de visualização para a folha específica (usa gid do worksheet)
-        gid = getattr(aprov_sheet, "id", None)
-        sheet_key = st.secrets.get("sheet_id")
-        if sheet_key and gid is not None:
-            # Tentar exportar apenas a folha específica como PDF usando as credenciais do serviço
-            try:
-                from google.auth.transport.requests import AuthorizedSession
+    if not st.session_state.autenticado_ferias_aprovadas:
+        st.header("🔐 Área restrita – Férias aprovadas")
+        senha = st.text_input("Senha RH:", type="password", key="senha_ferias_aprovadas")
 
-                authed_session = AuthorizedSession(creds)
-                export_url = f"https://docs.google.com/spreadsheets/d/{sheet_key}/export"
-                params = {
-                    "exportFormat": "pdf",
-                    "format": "pdf",
-                    "gid": str(gid),
-                    # request landscape A4 and prefer fitting to sheet page breaks/width
-                    "portrait": "false",
-                    "size": "A4",
-                    "scale": "1", 
-                    "fitw": "false",
-                    "gridlines": "false",
-                    "printtitle": "false",
-                    "sheetnames": "false",
-                    "fzr": "true",
-                }
-                headers = {"Accept": "application/pdf"}
-                resp = authed_session.get(export_url, params=params, headers=headers, allow_redirects=True)
+        if st.button("Entrar"):
+            if senha == SENHA_RH:
+                st.session_state.autenticado_ferias_aprovadas = True
+                st.success("Acesso autorizado")
+                st.rerun()
+            else:
+                st.error("Senha incorreta")
 
-                # Obter content-type de forma segura antes de usar
-                content_type = resp.headers.get("content-type", "")
+        st.stop()
 
-                # Verificar se a resposta é um PDF válido antes de embutir
-                if resp.status_code == 200 and "pdf" in content_type.lower() and len(resp.content) > 1000:
-                    pdf_bytes = resp.content
-                    # Verificar header do PDF
-                    is_pdf = pdf_bytes.startswith(b"%PDF")
-                    st.info(f"PDF header valid: {is_pdf}")
+    st.title("Férias aprovadas")
 
-                    # Detectar número de colunas congeladas (se disponível nas propriedades do worksheet)
-                    try:
-                        frozen_cols = int(getattr(aprov_sheet, '_properties', {}).get('gridProperties', {}).get('frozenColumnCount', 0) or 0)
-                    except Exception:
-                        frozen_cols = 0
-                    st.info(f"Colunas congeladas detectadas na folha: {frozen_cols}")
+    # Definir worksheet
+    sheet_ferias = spreadsheet.worksheet("Férias_aprovadas")
+    gid = sheet_ferias.id  # id da aba "Férias_aprovadas"
+    sheet_id = st.secrets["sheet_id"]
+    download_url = (
+        f"https://docs.google.com/spreadsheets/d/{sheet_id}/export"
+        f"?format=xlsx"
+        f"&gid={gid}"
+    )
 
-                    # Oferecer opção de pós-processamento para repetir colunas congeladas
-                    repetir = st.checkbox("Repetir colunas congeladas em cada página (pós-processamento)", value=False)
-                    if repetir and frozen_cols == 0:
-                        st.warning("Nenhuma coluna congelada detectada; o pós-processamento não fará sentido.")
-                        repetir = False
-                    if repetir:
-                        try:
-                            import fitz  # pymupdf
-                        except Exception:
-                            st.error("Biblioteca 'pymupdf' não encontrada. Instale com: pip install pymupdf")
-                            repetir = False
-
-                    # Antes do download: se o PDF vier numa única página muito alta,
-                    # dividir em páginas A4 (paisagem) para preservar quebras/legibilidade.
-                    try:
-                        import fitz
-                        src_tmp = fitz.open(stream=pdf_bytes, filetype="pdf")
-                        page_count_tmp = src_tmp.page_count
-                    except Exception:
-                        src_tmp = None
-                        page_count_tmp = None
-
-                    def split_long_pdf_to_a4(pdf_bytes_in, orientation_landscape=True, dpi=150):
-                        import fitz, math
-                        src = fitz.open(stream=pdf_bytes_in, filetype="pdf")
-                        # A4 sizes in points (portrait: width=595.276, height=841.89)
-                        if orientation_landscape:
-                            target_h = 595.276
-                        else:
-                            target_h = 841.89
-
-                        if src.page_count > 1:
-                            return pdf_bytes_in
-
-                        p = src[0]
-                        r = p.rect
-                        # If page height is already approximately target, return
-                        if r.height <= target_h + 2:
-                            return pdf_bytes_in
-
-                        out = fitz.open()
-                        n_slices = math.ceil(r.height / target_h)
-                        for i in range(n_slices):
-                            top = i * target_h
-                            bottom = min((i + 1) * target_h, r.height)
-                            clip = fitz.Rect(0, top, r.width, bottom)
-                            pix = p.get_pixmap(clip=clip, dpi=dpi)
-                            img_bytes = pix.tobytes("png")
-                            newp = out.new_page(width=r.width, height=(bottom - top))
-                            newp.insert_image(fitz.Rect(0, 0, r.width, (bottom - top)), stream=img_bytes)
-
-                        return out.tobytes()
-
-                    # Tentar dividir se for apenas uma página longa
-                    if page_count_tmp == 1:
-                        try:
-                            pdf_bytes = split_long_pdf_to_a4(pdf_bytes, orientation_landscape=True)
-                            st.info("PDF dividido em várias páginas A4 quando necessário.")
-                        except Exception as e:
-                            st.warning(f"Não foi possível dividir o PDF em páginas A4: {e}")
-
-                    # Oferecer botão de download (funciona mesmo que o embed seja bloqueado)
-                    if repetir:
-                        try:
-                            def repeat_left_columns(pdf_bytes_in, frozen_cols):
-                                import fitz
-
-                                src = fitz.open(stream=pdf_bytes_in, filetype="pdf")
-                                out = fitz.open()
-
-                                # Determine left width from first page
-                                first = src[0]
-                                r = first.rect
-                                # estimate left width: proportion of page width per frozen column
-                                left_w = max(100, min(r.width * 0.5, r.width * (0.08 * max(1, frozen_cols))))
-
-                                left_rect = fitz.Rect(0, 0, left_w, r.height)
-                                left_pix = first.get_pixmap(clip=left_rect, dpi=150)
-                                left_png = left_pix.tobytes("png")
-
-                                for p in src:
-                                    r = p.rect
-                                    full_pix = p.get_pixmap(dpi=150)
-                                    full_png = full_pix.tobytes("png")
-
-                                    newp = out.new_page(width=r.width, height=r.height)
-                                    newp.insert_image(fitz.Rect(0, 0, r.width, r.height), stream=full_png)
-                                    # overlay left frozen area
-                                    newp.insert_image(fitz.Rect(0, 0, left_w, r.height), stream=left_png)
-
-                                return out.tobytes()
-
-                            processed = repeat_left_columns(pdf_bytes, frozen_cols)
-                            pdf_bytes = processed
-                            st.success("Pós-processamento concluído: colunas repetidas em cada página.")
-                        except Exception as e:
-                            st.error(f"Erro no pós-processamento: {e}")
-
-                    st.download_button("📥 Baixar PDF - Férias Aprovadas", data=pdf_bytes, file_name="ferias_aprovadas.pdf", mime="application/pdf")
-
-                    # Tentar embutir (pode ser bloqueado pelo browser)
-                    try:
-                        b64 = base64.b64encode(pdf_bytes).decode("utf-8")
-                        pdf_display = f"<iframe src=\"data:application/pdf;base64,{b64}\" width=\"100%\" height=800></iframe>"
-                        st.components.v1.html(pdf_display, height=820)
-                    except Exception:
-                        st.warning("Embed falhou use o botão de download acima.")
-                else:
-                    # Não mostrar link de visualização para evitar pedidos de acesso de utilizadores
-                    st.error("Export não retornou um PDF válido (ver detalhes abaixo). Não será mostrado o link de visualização para evitar pedidos de acesso automáticos.")
-                    # Mostrar headers e um excerto do corpo para diagnóstico
-                    try:
-                        snippet = resp.content[:2000].decode("utf-8", errors="replace")
-                    except Exception:
-                        snippet = str(resp.content[:2000])
-                    st.code(snippet)
-                    st.write(dict(resp.headers))
-            except Exception as e:
-                # Mostrar o erro na UI para depuração
-                st.error(f"Erro na exportação PDF (AuthorizedSession): {e}")
-                st.info("Nota: não foi mostrado o link de visualização automática por motivos de segurança.")
-        else:
-            st.warning("Não foi possível construir o link de visualização (chave da sheet ou gid em falta).")
-
-        # Sem fallback de download: apenas link e tentativa de iframe para visualização
-
-    except Exception as e:
-        st.error(f"Erro ao carregar a folha 'Férias_aprovadas': {e}")
+    st.link_button(
+        "📥 Descarregar folha (Excel)",
+        download_url
+    )
