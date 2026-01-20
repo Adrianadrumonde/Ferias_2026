@@ -569,7 +569,7 @@ elif aba == "✔️ Férias aprovadas":
         st.session_state.autenticado_ferias_aprovadas = False
 
     if not st.session_state.autenticado_ferias_aprovadas:
-        st.header("🔐 Área restrita – Férias aprovadas")
+        st.header("Férias aprovadas")
         senha = st.text_input("Senha RH:", type="password", key="senha_ferias_aprovadas")
 
         if st.button("Entrar"):
