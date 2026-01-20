@@ -47,7 +47,7 @@ SMTP_SERVER = "mail.cesab.pt"
 SMTP_PORT = 465  # SSL
 SMTP_USER = st.secrets["user"]
 SMTP_PASS = st.secrets["pass"]
-DESTINO_EMAIL = "s.paulo@cesab.pt"
+DESTINO_EMAIL = "a.drumonde@cesab.pt"
 
 # =========================
 # LISTA DE FUNCIONÁRIOS
