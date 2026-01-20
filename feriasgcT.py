@@ -342,7 +342,7 @@ elif aba == "📊 Visualizar Solicitações":
     if "autenticado_rh" not in st.session_state:
         st.session_state.autenticado_rh = False
     if not st.session_state.autenticado_rh:
-        st.header("🔐 Área do RH")
+        st.header("Visualizar solicitações de férias e banco de horas")
         senha_rh = st.text_input("Senha RH:", type="password", key="senha_rh")
 
         if st.button("Entrar RH"):
