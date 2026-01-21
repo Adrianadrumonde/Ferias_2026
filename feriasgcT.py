@@ -13,7 +13,9 @@ from email.mime.application import MIMEApplication
 from google.oauth2.service_account import Credentials
 import gspread
 import base64
-
+import io
+from google.auth.transport.requests import Request
+import requests
 
 
 # FLAG para evitar envio de email repetido
@@ -47,7 +49,7 @@ SMTP_SERVER = "mail.cesab.pt"
 SMTP_PORT = 465  # SSL
 SMTP_USER = st.secrets["user"]
 SMTP_PASS = st.secrets["pass"]
-DESTINO_EMAIL = "s.paulo@cesab.pt"
+DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
 
 # =========================
 # LISTA DE FUNCIONÁRIOS
@@ -109,7 +111,7 @@ MAPA_SECCOES = {
     "Tomas Fernandes":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
-    "GAT": "j.pereira@cesab.pt",
+    "GAT": "a.drumonde@cesab.pt",
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
@@ -234,7 +236,7 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📊 Visualizar Solicitações", "📅 Solicitar Férias", "⏱️ Banco de Horas", "✔️ Férias aprovadas"])
+aba = st.sidebar.radio("📂 Menu", ["📊 Visualizar Solicitações", "📅 Solicitar Férias", "⏱️ Banco de Horas", "Férias aprovadas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
@@ -342,7 +344,7 @@ elif aba == "📊 Visualizar Solicitações":
     if "autenticado_rh" not in st.session_state:
         st.session_state.autenticado_rh = False
     if not st.session_state.autenticado_rh:
-        st.header("Visualizar solicitações de férias e banco de horas")
+        st.header("🔐 Área do RH")
         senha_rh = st.text_input("Senha RH:", type="password", key="senha_rh")
 
         if st.button("Entrar RH"):
@@ -560,7 +562,7 @@ elif aba == "⏱️ Banco de Horas":
 # =========================
 # ABA 4 – FÉRIAS APROVADAS (SOMENTE LEITURA)
 # =========================
-elif aba == "✔️ Férias aprovadas":
+elif aba == "Férias aprovadas":
    
     # =========================
     # AUTENTICAÇÃO RH (SOMENTE LEITURA)
@@ -569,7 +571,7 @@ elif aba == "✔️ Férias aprovadas":
         st.session_state.autenticado_ferias_aprovadas = False
 
     if not st.session_state.autenticado_ferias_aprovadas:
-        st.header("Férias aprovadas")
+        st.header("🔐 Área restrita – Férias aprovadas")
         senha = st.text_input("Senha RH:", type="password", key="senha_ferias_aprovadas")
 
         if st.button("Entrar"):
@@ -588,13 +590,25 @@ elif aba == "✔️ Férias aprovadas":
     sheet_ferias = spreadsheet.worksheet("Férias_aprovadas")
     gid = sheet_ferias.id  # id da aba "Férias_aprovadas"
     sheet_id = st.secrets["sheet_id"]
-    download_url = (
+    export_url = (
         f"https://docs.google.com/spreadsheets/d/{sheet_id}/export"
-        f"?format=xlsx"
-        f"&gid={gid}"
+        f"?format=xlsx&gid={gid}"
     )
+    # Fazer download do Excel usando o token do Google
+    creds.refresh(Request())
+    token = creds.token
 
-    st.link_button(
-        "📥 Descarregar folha (Excel)",
-        download_url
+    response = requests.get(
+        export_url,
+        headers={"Authorization": f"Bearer {token}"}
     )
+    if response.status_code == 200:
+        excel_bytes = io.BytesIO(response.content)
+        st.download_button(
+            label="📥 Baixar Férias Aprovadas (Excel)",
+            data=excel_bytes,
+            file_name="ferias_aprovadas.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.error("Erro ao baixar o arquivo Excel das Férias Aprovadas.")
