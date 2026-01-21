@@ -10,9 +10,11 @@ import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import streamlit as st
 from google.oauth2.service_account import Credentials
 import gspread
+import base64
+
+
 
 # FLAG para evitar envio de email repetido
 if "email_enviado" not in st.session_state:
@@ -20,7 +22,10 @@ if "email_enviado" not in st.session_state:
 if "email_formulario_enviado" not in st.session_state:
     st.session_state.email_formulario_enviado = False
 # =========================
-scope = ["https://www.googleapis.com/auth/spreadsheets"]
+scope = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.readonly",
+]
 
 creds = Credentials.from_service_account_info(
     st.secrets.gcp_service_account,
@@ -42,14 +47,14 @@ SMTP_SERVER = "mail.cesab.pt"
 SMTP_PORT = 465  # SSL
 SMTP_USER = st.secrets["user"]
 SMTP_PASS = st.secrets["pass"]
-DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
+DESTINO_EMAIL = "s.paulo@cesab.pt"
 
 # =========================
 # LISTA DE FUNCIONÁRIOS
 # =========================
 FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
                 "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
-                "Ana Joaquina","André Barandas","Maksym Martens ","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Ana Joaquina","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
                 "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
@@ -57,6 +62,60 @@ FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barra
                 ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
+MAPA_SECCOES = {
+    "Adriana Drumonde": "GAT",
+    "Carla Sério": "GAT",
+    "Elsa Barracho": "GESTÃO E SEC",
+    "Sandra Paulo": "GESTÃO E SEC",
+    "João Pereira": "GESTÃO E SEC",
+    "Maria Paulino": "GESTÃO E SEC",
+
+    "Andreia Mendes": "LOG.",
+    "Sarah Silva": "LOG.",
+    "Armanda Fernandes": "LOG.",
+
+    "M.ª do Céu Martins": "Apoio Lab.",
+    "Ana Joaquina": "Apoio Lab.",
+    "André Barandas": "Apoio Lab.",
+    "Brenda Santos": "Apoio Lab.",
+
+    "Alexandra Rajado": "Laboratório",
+    "Diogo Reis": "Laboratório",
+    "Liliana Nisa": "Laboratório",
+    "Sandra Pinheiro": "Laboratório",
+    "Mónica Cerveira": "Laboratório",
+    "Cláudia Bernardes": "Laboratório",
+    "Beatriz Martinho": "Laboratório",
+    "Eliari Silva": "Laboratório",
+    "Marta Pedroso": "Laboratório",
+    "Bruno Albuquerque": "Laboratório",
+    "Jaqueline Reis": "Laboratório",
+    "Carina Gonçalves": "Laboratório",
+
+    "Vítor Antunes": "Colheitas",
+    "Óscar Soares": "Colheitas",
+    "Rúben Rosa": "Colheitas",
+    "Catarina Torres": "Colheitas",
+    "André Martins": "Colheitas",
+    "Rafael Vivas": "Colheitas",
+    "Telmo Menoita": "Colheitas",
+    "Edgar Martins": "Colheitas",
+    "Bruno Santos": "Colheitas",
+    "Renato Alves": "Colheitas",
+    "Fábio Pego": "Colheitas",
+    "Tiago Daniel": "Colheitas",
+    "Gabriel Pinto": "Colheitas",
+    "Tiago Costa": "Colheitas",
+    "Tomas Fernandes":"Colheitas",
+}
+MAPA_EMAIL_SECCAO = {
+    "GAT": "j.pereira@cesab.pt",
+    "GESTÃO E SEC": "j.pereira@cesab.pt",
+    "LOG.": "j.pereira@cesab.pt",
+    "Apoio Lab.": "j.pereira@cesab.pt",
+    "Laboratório": "laboratorio@cesab.pt",
+    "Colheitas": "g.tecnico@cesab.pt",
+}
 # =========================
 # CONFIGURAÇÃO INICIAL
 # =========================
@@ -93,8 +152,8 @@ def dias_uteis(inicio, fim):
 # =========================
 # SENHAS
 # =========================
-SENHA_FUNCIONARIO = "ferias2025"
-SENHA_RH = "rh123"
+SENHA_FUNCIONARIO = st.secrets["SENHA_FUNCIONARIO"]
+SENHA_RH = st.secrets["SENHA_RH"]
 
 if "autenticado_func" not in st.session_state:
     st.session_state.autenticado_func = False
@@ -133,6 +192,10 @@ def salvar_solicitacao(nome, periodos):
 def enviar_email_com_anexo(nome, df_periodos):
     
     try:
+        # descobrir a secção pelo nome
+        seccao = MAPA_SECCOES.get(nome, None)
+        # descobrir email da secção
+        email_seccao = MAPA_EMAIL_SECCAO.get(seccao)
         # Preparar email
         subject = f"Solicitação de Férias_BH - {nome}"
         body = "Segue em anexo a solicitação de férias."
@@ -141,7 +204,13 @@ def enviar_email_com_anexo(nome, df_periodos):
         msg['From'] = SMTP_USER
         msg['To'] = DESTINO_EMAIL
         msg['Subject'] = subject
-
+        # CC apenas se existir email para a secção
+        if email_seccao:
+            msg['Cc'] = email_seccao
+            destinatarios = [DESTINO_EMAIL, email_seccao]
+        else:
+            destinatarios = [DESTINO_EMAIL]
+        
         msg.attach(MIMEText(body, "plain"))
 
         # Converte DataFrame para CSV em bytes
@@ -154,8 +223,8 @@ def enviar_email_com_anexo(nome, df_periodos):
         context = ssl.create_default_context()
         with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context) as server:
             server.login(SMTP_USER, SMTP_PASS)
-            server.sendmail(SMTP_USER, DESTINO_EMAIL, msg.as_string())
-
+           # server.sendmail(SMTP_USER, DESTINO_EMAIL, msg.as_string())
+            server.sendmail(SMTP_USER, destinatarios, msg.as_string())
         return True
     except Exception as e:
         # Para debug, mostre erro no Streamlit
@@ -165,7 +234,7 @@ def enviar_email_com_anexo(nome, df_periodos):
 # =========================
 # MENU LATERAL
 # =========================
-aba = st.sidebar.radio("📂 Menu", ["📅 Solicitar Férias", "📊 Visualizar Solicitações", "⏱️ Banco de Horas"])
+aba = st.sidebar.radio("📂 Menu", ["📊 Visualizar Solicitações", "📅 Solicitar Férias", "⏱️ Banco de Horas", "✔️ Férias aprovadas"])
 
 # =========================
 # ABA 1 – FORMULÁRIO
@@ -273,7 +342,7 @@ elif aba == "📊 Visualizar Solicitações":
     if "autenticado_rh" not in st.session_state:
         st.session_state.autenticado_rh = False
     if not st.session_state.autenticado_rh:
-        st.header("🔐 Área do RH")
+        st.header("Visualizar solicitações de férias e banco de horas")
         senha_rh = st.text_input("Senha RH:", type="password", key="senha_rh")
 
         if st.button("Entrar RH"):
@@ -286,74 +355,96 @@ elif aba == "📊 Visualizar Solicitações":
         st.stop()
     
     st.header("📊 Solicitações Registradas")
-
+#carregar os dados uma única vez
     dados = sheet.get_all_records()
     df = pd.DataFrame(dados)
-    
+
     if df.empty:
         st.info("Nenhuma solicitação encontrada no Google Sheets.")
         st.stop()
-    # Carregar dados do Google Sheets
-    dados = sheet.get_all_records()
-    df = pd.DataFrame(dados)
+ # ---- CRIAR COLUNA SECÇÃO ----
+    df["Secção"] = df["Nome"].map(MAPA_SECCOES).fillna("Sem Secção")
+
+# Conversão de datas
     if "Data de Início" in df.columns:
         df["Data_Inicio"] = pd.to_datetime(df["Data_Inicio"])
     if "Data de Fim" in df.columns:
-        df["Data_Fim"] = pd.to_datetime(df["Data_Fim"])
+        df["Data_Fim"] = pd.to_datetime(df["Data_de_Fim"])
+    if "Dias_Úteis" in df.columns:
+        df["Dias_Úteis"] = pd.to_numeric(df["Dias_Úteis"], errors="coerce")
+ 
+ # Filtro por secção
+    seccoes = sorted(df["Secção"].unique())
+    filtro_seccao = st.multiselect("Filtrar secção:", seccoes)
+    if filtro_seccao:
+        df = df[df["Secção"].isin(filtro_seccao)]
+ #Filtro por funcionário   
     nomes = sorted(df["Nome"].unique())
     filtros = st.multiselect(
-       "Filtrar funcionário(s):",
-     nomes
-    )
-
+       "Filtrar funcionário(s):",nomes)
     if filtros:
      df = df[df["Nome"].isin(filtros)]
-
-    st.dataframe(df, use_container_width=True)
+    
+    # Remover Observações apenas da visualização
+    df_vis = df.drop(
+    columns=["Observações", "Timestamp", "Secção"],
+    errors="ignore")
+   
+    st.dataframe(df_vis, use_container_width=True)
 
    
 # ----------------------
     # GRÁFICO DE GANTT
     # ----------------------
-    st.subheader("📅 Gráfico de Gantt – Períodos de Férias")
-    # Filtrar apenas férias
-    df_ferias = df[df["Tipo"] == "FERIAS"].copy()
+    st.subheader("📅 Períodos de Férias e Banco de Horas (BH) Solicitados")
+   
+    df_gantt = df.copy()
 
-    if df_ferias.empty:
-        st.info("Não existem solicitações de férias para mostrar.")
-    else:
-        #Converter datas (sabemos que estas colunas existem nas férias)
-        df_ferias["Data_Inicio"] = pd.to_datetime(df_ferias["Data_Inicio"])
-        df_ferias["Data_Fim"] = pd.to_datetime(df_ferias["Data_Fim"])
-        # Garantir duração mínima para o gráfico
-        df_ferias["Data_Fim_plot"] = df_ferias["Data_Fim"]
-        df_ferias.loc[
-            df_ferias["Data_Fim_plot"] <= df_ferias["Data_Inicio"],
-            "Data_Fim_plot"
-        ] = df_ferias["Data_Inicio"] + pd.Timedelta(days=1)
-        
-        # Período como texto (cores)
-        df_ferias["Período"] = df_ferias["Período"].astype(str)
+    # Converter datas
+    df_gantt["Data_Inicio"] = pd.to_datetime(df_gantt["Data_Inicio"])
+    df_gantt["Data_Fim"] = pd.to_datetime(df_gantt["Data_Fim"])
 
-        fig = px.timeline(
-            df_ferias,
-            x_start="Data_Inicio",
-            x_end="Data_Fim_plot",
-            y="Nome",
-            color="Período",
-            hover_data=["Dias_Úteis", "Observações", "Data_Fim"]
-        )
-        fig.update_yaxes(autorange="reversed")
-        st.plotly_chart(fig, use_container_width=True)
+    # Criar coluna de fim para o gráfico
+    df_gantt["Data_Fim_plot"] = df_gantt["Data_Fim"]
 
-    # download geral
-    csv_full = df.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "📥 Baixar CSV Completo",
-        data=csv_full,
-        file_name="solicitacoes_ferias.csv",
-        mime="text/csv"
+    # Tratar BH (Banco de Horas)
+    mask_bh = df_gantt["Tipo"] == "BH"
+
+    def calcular_fim_bh(row):
+        horas = 0
+        if row["Parte"]:
+            if "Manhã" in row["Parte"]:
+                horas += 4
+            if "Tarde" in row["Parte"]:
+                horas += 4
+        if horas == 0:
+            horas = 4  # fallback seguro
+        return row["Data_Inicio"] + pd.Timedelta(hours=horas)
+    df_gantt.loc[mask_bh, "Data_Fim_plot"] = df_gantt[mask_bh].apply(
+        calcular_fim_bh, axis=1
     )
+    # Garantir duração mínima para férias
+    df_gantt.loc[
+        df_gantt["Data_Fim_plot"] <= df_gantt["Data_Inicio"],
+        "Data_Fim_plot"
+    ] = df_gantt["Data_Inicio"] + pd.Timedelta(days=1)
+
+    fig = px.timeline(
+        df_gantt,
+        x_start="Data_Inicio",
+        x_end="Data_Fim_plot",
+        y="Nome",
+        color="Tipo",  # FERIAS vs BH
+        color_discrete_map={
+            "FERIAS": "blue",
+            "BH": "gray"
+        },
+        hover_data=["Tipo", "Parte", "Dias_Úteis"]
+    )
+
+    fig.update_yaxes(autorange="reversed")
+    st.plotly_chart(fig, use_container_width=True)
+
 # =========================
 # ABA 3 – BH / BANCO DE HORAS
 # =========================
@@ -464,3 +555,46 @@ elif aba == "⏱️ Banco de Horas":
                             st.success("📧 Email com solicitações BH enviado para o RH com sucesso!")
                             st.session_state.email_enviado = True
                     st.balloons()
+
+
+# =========================
+# ABA 4 – FÉRIAS APROVADAS (SOMENTE LEITURA)
+# =========================
+elif aba == "✔️ Férias aprovadas":
+   
+    # =========================
+    # AUTENTICAÇÃO RH (SOMENTE LEITURA)
+    # =========================
+    if "autenticado_ferias_aprovadas" not in st.session_state:
+        st.session_state.autenticado_ferias_aprovadas = False
+
+    if not st.session_state.autenticado_ferias_aprovadas:
+        st.header("Férias aprovadas")
+        senha = st.text_input("Senha RH:", type="password", key="senha_ferias_aprovadas")
+
+        if st.button("Entrar"):
+            if senha == SENHA_RH:
+                st.session_state.autenticado_ferias_aprovadas = True
+                st.success("Acesso autorizado")
+                st.rerun()
+            else:
+                st.error("Senha incorreta")
+
+        st.stop()
+
+    st.title("Férias aprovadas")
+
+    # Definir worksheet
+    sheet_ferias = spreadsheet.worksheet("Férias_aprovadas")
+    gid = sheet_ferias.id  # id da aba "Férias_aprovadas"
+    sheet_id = st.secrets["sheet_id"]
+    download_url = (
+        f"https://docs.google.com/spreadsheets/d/{sheet_id}/export"
+        f"?format=xlsx"
+        f"&gid={gid}"
+    )
+
+    st.link_button(
+        "📥 Descarregar folha (Excel)",
+        download_url
+    )
