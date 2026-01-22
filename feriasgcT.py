@@ -61,6 +61,7 @@ FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barra
                 "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
                 "Renato Alves",  "Fábio Pego", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto", "Carina Gonçalves",
+                "Flavia Lima",
                 ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
@@ -80,6 +81,7 @@ MAPA_SECCOES = {
     "Ana Joaquina": "Apoio Lab.",
     "André Barandas": "Apoio Lab.",
     "Brenda Santos": "Apoio Lab.",
+    "Flavia Lima": "Apoio Lab.",
 
     "Alexandra Rajado": "Laboratório",
     "Diogo Reis": "Laboratório",
@@ -111,7 +113,7 @@ MAPA_SECCOES = {
     "Tomas Fernandes":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
-    "GAT": "a.drumonde@cesab.pt",
+    "GAT": "j.pereira@cesab.pt",
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
