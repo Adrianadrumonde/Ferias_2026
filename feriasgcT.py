@@ -16,6 +16,8 @@ import base64
 import io
 from google.auth.transport.requests import Request
 import requests
+from io import BytesIO
+
 
 
 # FLAG para evitar envio de email repetido
@@ -117,7 +119,7 @@ MAPA_EMAIL_SECCAO = {
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
-    "Laboratório": "laboratorio@cesab.pt",
+    "Laboratório": "a.drumonde@cesab.pt",
     "Colheitas": "g.tecnico@cesab.pt",
 }
 # =========================
@@ -202,7 +204,7 @@ def enviar_email_com_anexo(nome, df_periodos):
         email_seccao = MAPA_EMAIL_SECCAO.get(seccao)
         # Preparar email
         subject = f"Solicitação de Férias_BH - {nome}"
-        body = "Segue em anexo a solicitação de férias."
+        body = "Segue em anexo a solicitação de férias_BH."
 
         msg = MIMEMultipart()
         msg['From'] = SMTP_USER
@@ -217,11 +219,23 @@ def enviar_email_com_anexo(nome, df_periodos):
         
         msg.attach(MIMEText(body, "plain"))
 
-        # Converte DataFrame para CSV em bytes
-        csv_bytes = df_periodos.to_csv(index=False).encode("utf-8")
-        part = MIMEApplication(csv_bytes, Name=f"solicitacao_{nome.replace(' ', '_')}.csv")
-        part['Content-Disposition'] = f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.csv"'
+        #  CONVERTER DATAFRAME PARA EXCEL (EM MEMÓRIA)
+        buffer = BytesIO()
+        df_periodos.to_excel(
+            buffer, 
+            index=False, 
+            sheet_name="Solicitação"
+        )
+        buffer.seek(0)
+        part = MIMEApplication(
+            buffer.read(),
+              Name=f"solicitacao_{nome.replace(' ', '_')}.xlsx"
+        )
+        part['Content-Disposition'] = (
+            f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.xlsx"'
+        )
         msg.attach(part)
+
 
         # Envia e-mail
         context = ssl.create_default_context()
@@ -322,7 +336,8 @@ if aba == "📅 Solicitar Férias":
 
             # download individual
             df_download = pd.DataFrame(periodos)
-            csv_bytes = df_download.to_csv(index=False).encode("utf-8")
+            csv_bytes = df_download.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+       
             st.download_button(
                 "📥 Baixar cópia (CSV)",
                 data=csv_bytes,
@@ -528,7 +543,7 @@ elif aba == "⏱️ Banco de Horas":
                     df_bh = pd.DataFrame(registros_validos)
                     # Inserir nome do funcionário na primeira coluna
                     df_bh.insert(0, "Nome do funcionário", nome)
-                    csv_bytes = df_bh.to_csv(index=False).encode("utf-8")
+                    csv_bytes = df_bh.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
                     st.success("Solicitações BH preparadas com sucesso!")
                     st.download_button(
                         "📥 Baixar cópia (CSV) - BH",
