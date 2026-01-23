@@ -119,7 +119,7 @@ MAPA_EMAIL_SECCAO = {
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
-    "Laboratório": "a.drumonde@cesab.pt",
+    "Laboratório": "laboratorio@cesab.pt",
     "Colheitas": "g.tecnico@cesab.pt",
 }
 # =========================
