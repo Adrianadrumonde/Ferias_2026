@@ -7,4 +7,3 @@ holidays
 python-dotenv
 gspread
 google-auth
-pymupdf
