@@ -57,13 +57,13 @@ DESTINO_EMAIL = "s.paulo@cesab.pt"
 # LISTA DE FUNCIONÁRIOS
 # =========================
 FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
-                "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
-                "Ana Joaquina","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
+                "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","Maria do Céu Martins",
+                "Ana Joaquina Sousa","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
                 "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
                 "Renato Alves",  "Fábio Pego", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto", "Carina Gonçalves",
-                "Flavia Lima",
+                 "Helder Garcia", "Flavia Lima",
                 ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
@@ -79,7 +79,7 @@ MAPA_SECCOES = {
     "Sarah Silva": "LOG.",
     "Armanda Fernandes": "LOG.",
 
-    "M.ª do Céu Martins": "Apoio Lab.",
+    "Maria do Céu Martins": "Apoio Lab.",
     "Ana Joaquina": "Apoio Lab.",
     "André Barandas": "Apoio Lab.",
     "Brenda Santos": "Apoio Lab.",
@@ -113,6 +113,7 @@ MAPA_SECCOES = {
     "Gabriel Pinto": "Colheitas",
     "Tiago Costa": "Colheitas",
     "Tomas Fernandes":"Colheitas",
+    "Helder Garcia":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
     "GAT": "j.pereira@cesab.pt",
