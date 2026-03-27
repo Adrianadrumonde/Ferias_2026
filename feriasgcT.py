@@ -56,14 +56,14 @@ DESTINO_EMAIL = "s.paulo@cesab.pt"
 # =========================
 # LISTA DE FUNCIONÁRIOS
 # =========================
-FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
+FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pedro Pereira",
                 "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","Maria do Céu Martins",
                 "Ana Joaquina Sousa","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
                 "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
-                "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
+                "Marta Pedroso","Bruno Albuquerque","Tiago Filipe Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
                 "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
                 "Renato Alves",  "Fábio Pego", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto", "Carina Gonçalves",
-                 "Helder Garcia", "Flavia Lima",
+                 "Hélder Garcia", "Flavia Lima",
                 ]
 FUNCIONARIOS = sorted(FUNCIONARIOS)
 
@@ -72,7 +72,7 @@ MAPA_SECCOES = {
     "Carla Sério": "GAT",
     "Elsa Barracho": "GESTÃO E SEC",
     "Sandra Paulo": "GESTÃO E SEC",
-    "João Pereira": "GESTÃO E SEC",
+    "João Pedro Pereira": "GESTÃO E SEC",
     "Maria Paulino": "GESTÃO E SEC",
 
     "Andreia Mendes": "LOG.",
@@ -109,11 +109,11 @@ MAPA_SECCOES = {
     "Bruno Santos": "Colheitas",
     "Renato Alves": "Colheitas",
     "Fábio Pego": "Colheitas",
-    "Tiago Daniel": "Colheitas",
+    "Tiago Filipe Daniel": "Colheitas",
     "Gabriel Pinto": "Colheitas",
     "Tiago Costa": "Colheitas",
     "Tomas Fernandes":"Colheitas",
-    "Helder Garcia":"Colheitas",
+    "Hélder Garcia":"Colheitas",
 }
 MAPA_EMAIL_SECCAO = {
     "GAT": "j.pereira@cesab.pt",
