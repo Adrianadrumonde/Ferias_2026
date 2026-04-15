@@ -161,11 +161,18 @@ def enviar_email_com_anexo(nome, df_periodos):
         msg['To'] = DESTINO_EMAIL
         msg['Subject'] = subject
         # CC apenas se existir email para a secção
+        #if email_seccao:
+         #   msg['Cc'] = email_seccao
+          #  destinatarios = [DESTINO_EMAIL, email_seccao]
+
         if email_seccao:
-            msg['Cc'] = email_seccao
-            destinatarios = [DESTINO_EMAIL, email_seccao]
+            lista_cc = [e.strip() for e in email_seccao.split(";")]
+            msg['Cc'] = ", ".join(lista_cc)
+            destinatarios = [DESTINO_EMAIL] + lista_cc
         else:
             destinatarios = [DESTINO_EMAIL]
+
+
         
         msg.attach(MIMEText(body, "plain"))
 
