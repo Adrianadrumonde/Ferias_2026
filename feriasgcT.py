@@ -13,6 +13,10 @@ from email.mime.application import MIMEApplication
 from google.oauth2.service_account import Credentials
 import gspread
 import base64
+import io
+from google.auth.transport.requests import Request
+import requests
+from io import BytesIO
 
 
 
@@ -36,6 +40,13 @@ client = gspread.authorize(creds)
 spreadsheet = client.open_by_key(st.secrets["sheet_id"])
 sheet = spreadsheet.worksheet("solicitacoes")
 
+# Read employees and sections from Google Sheet
+func_sheet = spreadsheet.worksheet("Funcionários e Secções")
+data = func_sheet.get_all_values()
+# Process data: assume column A = name, B = section, skip rows with empty name
+func_data = [row for row in data if len(row) >= 2 and row[0].strip()]
+FUNCIONARIOS = [""] + sorted([row[0].strip() for row in func_data])
+MAPA_SECCOES = {row[0].strip(): row[1].strip() for row in func_data if row[1].strip()}
 
 def guardar_no_sheets(linhas):
     """
@@ -47,73 +58,18 @@ SMTP_SERVER = "mail.cesab.pt"
 SMTP_PORT = 465  # SSL
 SMTP_USER = st.secrets["user"]
 SMTP_PASS = st.secrets["pass"]
-DESTINO_EMAIL = "adrianadrumonde@sapo.pt"
+DESTINO_EMAIL = "s.paulo@cesab.pt"
 
 # =========================
-# LISTA DE FUNCIONÁRIOS
+# LISTA DE FUNCIONÁRIOS e MAPA_SECCOES são carregados do Google Sheets
 # =========================
-FUNCIONARIOS = ["","Carla Sério","Adriana Drumonde","Maria Paulino","Elsa Barracho","Sandra Paulo","João Pereira",
-                "Armanda Fernandes","Andreia Mendes","Sarah Silva","Brenda Santos","M.ª do Céu Martins",
-                "Ana Joaquina","André Barandas","Jaqueline Reis","Alexandra Rajado","Diogo Reis","Liliana Nisa",
-                "Sandra Pinheiro","Mónica Cerveira","Cláudia Bernardes","Beatriz Martinho","Eliari Silva",
-                "Marta Pedroso","Bruno Albuquerque","Tiago Daniel","Vítor Antunes","Óscar Soares","Rúben Rosa", "Catarina Torres",
-                "André Martins", "Rafael Vivas", "Telmo Menoita", "Edgar Martins", "Bruno Santos",
-                "Renato Alves",  "Fábio Pego", "Tomas Fernandes", "Tiago Costa", "Gabriel Pinto", "Carina Gonçalves",
-                ]
-FUNCIONARIOS = sorted(FUNCIONARIOS)
 
-MAPA_SECCOES = {
-    "Adriana Drumonde": "GAT",
-    "Carla Sério": "GAT",
-    "Elsa Barracho": "GESTÃO E SEC",
-    "Sandra Paulo": "GESTÃO E SEC",
-    "João Pereira": "GESTÃO E SEC",
-    "Maria Paulino": "GESTÃO E SEC",
-
-    "Andreia Mendes": "LOG.",
-    "Sarah Silva": "LOG.",
-    "Armanda Fernandes": "LOG.",
-
-    "M.ª do Céu Martins": "Apoio Lab.",
-    "Ana Joaquina": "Apoio Lab.",
-    "André Barandas": "Apoio Lab.",
-    "Brenda Santos": "Apoio Lab.",
-
-    "Alexandra Rajado": "Laboratório",
-    "Diogo Reis": "Laboratório",
-    "Liliana Nisa": "Laboratório",
-    "Sandra Pinheiro": "Laboratório",
-    "Mónica Cerveira": "Laboratório",
-    "Cláudia Bernardes": "Laboratório",
-    "Beatriz Martinho": "Laboratório",
-    "Eliari Silva": "Laboratório",
-    "Marta Pedroso": "Laboratório",
-    "Bruno Albuquerque": "Laboratório",
-    "Jaqueline Reis": "Laboratório",
-    "Carina Gonçalves": "Laboratório",
-
-    "Vítor Antunes": "Colheitas",
-    "Óscar Soares": "Colheitas",
-    "Rúben Rosa": "Colheitas",
-    "Catarina Torres": "Colheitas",
-    "André Martins": "Colheitas",
-    "Rafael Vivas": "Colheitas",
-    "Telmo Menoita": "Colheitas",
-    "Edgar Martins": "Colheitas",
-    "Bruno Santos": "Colheitas",
-    "Renato Alves": "Colheitas",
-    "Fábio Pego": "Colheitas",
-    "Tiago Daniel": "Colheitas",
-    "Gabriel Pinto": "Colheitas",
-    "Tiago Costa": "Colheitas",
-    "Tomas Fernandes":"Colheitas",
-}
 MAPA_EMAIL_SECCAO = {
-    "GAT": "a.drumonde@cesab.pt",
+    "GAT": "j.pereira@cesab.pt",
     "GESTÃO E SEC": "j.pereira@cesab.pt",
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
-    "Laboratório": "laboratorio@cesab.pt",
+    "Laboratório": "a.drumonde@cesab.pt",
     "Colheitas": "g.tecnico@cesab.pt",
 }
 # =========================
@@ -198,7 +154,7 @@ def enviar_email_com_anexo(nome, df_periodos):
         email_seccao = MAPA_EMAIL_SECCAO.get(seccao)
         # Preparar email
         subject = f"Solicitação de Férias_BH - {nome}"
-        body = "Segue em anexo a solicitação de férias."
+        body = "Segue em anexo a solicitação de férias_BH."
 
         msg = MIMEMultipart()
         msg['From'] = SMTP_USER
@@ -213,11 +169,23 @@ def enviar_email_com_anexo(nome, df_periodos):
         
         msg.attach(MIMEText(body, "plain"))
 
-        # Converte DataFrame para CSV em bytes
-        csv_bytes = df_periodos.to_csv(index=False).encode("utf-8")
-        part = MIMEApplication(csv_bytes, Name=f"solicitacao_{nome.replace(' ', '_')}.csv")
-        part['Content-Disposition'] = f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.csv"'
+        #  CONVERTER DATAFRAME PARA EXCEL (EM MEMÓRIA)
+        buffer = BytesIO()
+        df_periodos.to_excel(
+            buffer, 
+            index=False, 
+            sheet_name="Solicitação"
+        )
+        buffer.seek(0)
+        part = MIMEApplication(
+            buffer.read(),
+              Name=f"solicitacao_{nome.replace(' ', '_')}.xlsx"
+        )
+        part['Content-Disposition'] = (
+            f'attachment; filename="solicitacao_{nome.replace(" ", "_")}.xlsx"'
+        )
         msg.attach(part)
+
 
         # Envia e-mail
         context = ssl.create_default_context()
@@ -318,7 +286,8 @@ if aba == "📅 Solicitar Férias":
 
             # download individual
             df_download = pd.DataFrame(periodos)
-            csv_bytes = df_download.to_csv(index=False).encode("utf-8")
+            csv_bytes = df_download.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+       
             st.download_button(
                 "📥 Baixar cópia (CSV)",
                 data=csv_bytes,
@@ -524,7 +493,7 @@ elif aba == "⏱️ Banco de Horas":
                     df_bh = pd.DataFrame(registros_validos)
                     # Inserir nome do funcionário na primeira coluna
                     df_bh.insert(0, "Nome do funcionário", nome)
-                    csv_bytes = df_bh.to_csv(index=False).encode("utf-8")
+                    csv_bytes = df_bh.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
                     st.success("Solicitações BH preparadas com sucesso!")
                     st.download_button(
                         "📥 Baixar cópia (CSV) - BH",
@@ -588,13 +557,25 @@ elif aba == "Férias aprovadas":
     sheet_ferias = spreadsheet.worksheet("Férias_aprovadas")
     gid = sheet_ferias.id  # id da aba "Férias_aprovadas"
     sheet_id = st.secrets["sheet_id"]
-    download_url = (
+    export_url = (
         f"https://docs.google.com/spreadsheets/d/{sheet_id}/export"
-        f"?format=xlsx"
-        f"&gid={gid}"
+        f"?format=xlsx&gid={gid}"
     )
+    # Fazer download do Excel usando o token do Google
+    creds.refresh(Request())
+    token = creds.token
 
-    st.link_button(
-        "📥 Descarregar folha (Excel)",
-        download_url
+    response = requests.get(
+        export_url,
+        headers={"Authorization": f"Bearer {token}"}
     )
+    if response.status_code == 200:
+        excel_bytes = io.BytesIO(response.content)
+        st.download_button(
+            label="📥 Baixar Férias Aprovadas (Excel)",
+            data=excel_bytes,
+            file_name="ferias_aprovadas.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    else:
+        st.error("Erro ao baixar o arquivo Excel das Férias Aprovadas.")
