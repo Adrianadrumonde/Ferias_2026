@@ -40,13 +40,6 @@ client = gspread.authorize(creds)
 spreadsheet = client.open_by_key(st.secrets["sheet_id"])
 sheet = spreadsheet.worksheet("solicitacoes")
 
-# Debug: listar todas as abas
-print("Abas disponíveis:")
-for sheet in spreadsheet.worksheets():
-    print(f"  - '{sheet.title}'")
-
-
-
 # Read employees and sections from Google Sheet
 func_sheet = spreadsheet.worksheet("FuncionariosEsecao")
 data = func_sheet.get_all_values()
