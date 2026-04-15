@@ -48,7 +48,7 @@ for sheet in spreadsheet.worksheets():
 
 
 # Read employees and sections from Google Sheet
-func_sheet = spreadsheet.worksheet("Funcionários e Secções")
+func_sheet = spreadsheet.worksheet("FuncionariosEsecao")
 data = func_sheet.get_all_values()
 # Process data: assume column A = name, B = section, skip rows with empty name
 func_data = [row for row in data if len(row) >= 2 and row[0].strip()]
