@@ -70,7 +70,7 @@ MAPA_EMAIL_SECCAO = {
     "LOG.": "j.pereira@cesab.pt",
     "Apoio Lab.": "j.pereira@cesab.pt",
     "Laboratório": "j.pereira@cesab.pt;laboratorio@cesab.pt",
-    "Colheitas": "j.pereira@cesab.pt;g.tecnico@cesab.pt",
+    "Colheitas": "g.tecnico@cesab.pt",
 }
 # =========================
 # CONFIGURAÇÃO INICIAL
